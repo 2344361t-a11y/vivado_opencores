@@ -1,0 +1,21 @@
+# Vivado project and temporary files
+.Xil/
+wbuart_sim/
+wbuart_original_benches/
+xsim.dir/
+
+# Vivado logs, journals, and protocol buffers
+*.log
+*.jou
+*.pb
+*.backup.jou
+*.backup.log
+
+# Simulation generated data files (generated via Tcl)
+speech.hex
+wbuart32/trunk/bench/verilog/speech.hex
+
+# OS generated files
+.DS_Store
+Thumbs.db
+__MACOSX/

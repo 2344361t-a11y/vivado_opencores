@@ -1,0 +1,77 @@
+# RS-232回路 期待値表 (OpenCores wbuart32版)
+
+## テスト条件
+- クロック周期: `10 ns`
+- クロック数/ビット: `10` (`clocks_per_baud` = 10)
+- UART 1bit期間: `100 ns`
+- フレーム形式: `8E1` (送信側) / `8E1` (受信側)
+  - スタートビット 1bit
+  - データ 8bit
+  - 偶数パリティ 1bit (tx_setup[24]=0 / rx_setup[24]=1)
+  - ストップビット 1bit
+
+## 期待値表
+
+| ケースID | テスト目的 | 入力 | 期待される出力 |
+| --- | --- | --- | --- |
+| CASE1 | 正常な送受信 | `pulse_start(8'h28)` | `rx_done`がアサート、`rx_data=8'h28`、`rx_data_valid=1`、`tb_parity_err=0`、`tb_frame_err=0`、`rx_overrun_error=0` |
+| CASE1-READ | 受信済みデータのクリア | CASE1 後に `pulse_data_read()` | `rx_data_valid=0`、`rx_overrun_error=0` |
+| CASE2 | パリティエラー検出 | `inject_frame(8'h55, 1'b1, 1'b1)` | `rx_done=0`、`tb_parity_err=1`、`rx_data_valid=0`、`tb_frame_err=0` |
+| CASE3 | フレーミングエラー検出 | `inject_frame(8'h33, 1'b0, 1'b0)` | `rx_done=0`、`tb_frame_err=1`、`rx_data_valid=0` |
+| CASE4-1 | オーバーラン前の正常受信 | `pulse_start(8'hA5)` | `rx_done`がアサート、`rx_data=8'hA5`、`rx_data_valid=1`、`rx_overrun_error=0` |
+| CASE4-2 | オーバーランエラー検出 | CASE4-1 後に `data_read` を行わず `pulse_start(8'h3C)` | `rx_done`がアサート、`rx_data=8'h3C`、`rx_data_valid=1`、`rx_overrun_error=1` |
+| CASE4-READ | オーバーラン状態のクリア | CASE4-2 後に `pulse_data_read()` | `rx_overrun_error=0`、`rx_data_valid=0` |
+
+## 実シミュレーション結果
+Vivado Simulator の実行ログより、上記の全ケースが期待どおりに確認できた。
+
+| ケースID | シミュレーション結果 | 判定 |
+| --- | --- | --- |
+| CASE1 | `rx_data=0x28`、`rx_done`アサート、`tb_parity_err=0`、`tb_frame_err=0` を確認 | 合格 |
+| CASE1-READ | `rx_data_valid` のクリアを確認 | 合格 |
+| CASE2 | `rx_data=0x55`、`tb_parity_err=1`、`rx_done=0` を確認 | 合格 |
+| CASE3 | `tb_frame_err=1`、`rx_done=0` を確認 | 合格 |
+| CASE4-1 | `rx_data=0xA5`、`rx_done`アサート、`rx_overrun_error=0` を確認 | 合格 |
+| CASE4-2 | `rx_data=0x3C`、`rx_overrun_error=1` を確認 | 合格 |
+| CASE4-READ | `rx_overrun_error=0` のクリアを確認 | 合格 |
+
+## フレーム単位の期待値
+
+### CASE1: データ `8'h28`
+- 2進数表現: `0010_1000`
+- LSB first の送信順: `0,0,0,1,0,1,0,0`
+- `1` の個数: `2` (偶数)
+- 偶数パリティ bit: `0`
+- フレーム全体: `0(start), 0,0,0,1,0,1,0,0, 0(parity), 1(stop)`
+
+### CASE2: データ `8'h55`
+- 2進数表現: `0101_0101`
+- `1` の個数: `4` (偶数)
+- 正しい偶数パリティ bit: `0`
+- テストベンチで注入するパリティ bit: `1`
+- 期待結果: `tb_parity_err=1`
+
+### CASE3: データ `8'h33`
+- 2進数表現: `0011_0011`
+- `1` の個数: `4` (偶数)
+- 正しい偶数パリティ bit: `0`
+- テストベンチで注入する stop bit: `0`
+- 期待結果: `tb_frame_err=1`
+
+## 期待されるログ出力
+- 送信側 RTL (`txuart.v`):
+  - `uart_tx PATH: IDLE->START`
+  - `uart_tx PATH: DATA->PARITY`
+  - `uart_tx PATH: STOP->IDLE tx_complete`
+- 受信側 RTL (`rxuart.v`):
+  - `uart_rx PATH: IDLE->START`
+  - `uart_rx PATH: START->DATA`
+  - `uart_rx PATH: PARITY->STOP`
+  - `uart_rx PATH: STOP->IDLE rx_done=1 ...`
+  - `uart_rx PATH: STOP->IDLE error framing=... parity=...`
+- テストベンチ:
+  - `TB_PATH: CASE1 ...`
+  - `TB_PATH: CASE2 ...`
+  - `TB_PATH: CASE3 ...`
+  - `TB_PATH: CASE4 ...`
+  - `TB_SUMMARY: pass=15 fail=0`
