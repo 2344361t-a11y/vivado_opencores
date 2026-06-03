@@ -1,8 +1,7 @@
 # RS-232回路およびテストベンチ説明書
 
 ## 対象ファイル
-- `uart_tx.v`: UART送信回路
-- `uart_rx.v`: UART受信回路
+- `rxurtlite.v`: UART受信回路
 - `tb_uart_loopback.v`: 検証用テストベンチ
 
 ## 回路概要
