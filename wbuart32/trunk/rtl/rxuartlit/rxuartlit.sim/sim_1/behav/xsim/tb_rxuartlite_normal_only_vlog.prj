@@ -1,7 +1,7 @@
 # compile verilog/system verilog design source files
 verilog xil_defaultlib  --include "../../../../../../../../../../../../../../AMDDesignTools/2025.2/Vivado/data/rsb/busdef" \
 "../../../../rxuartlit.srcs/sources_1/imports/rtl/rxuartlite.v" \
-"../../../../rxuartlit.srcs/sim_1/imports/Downloads/tb_rxuartlite_simple_fixed.v" \
+"../../../../rxuartlit.srcs/sim_1/imports/Downloads/tb_rxuartlite_normal_only.v" \
 
 # compile glbl module
 verilog xil_defaultlib "glbl.v"
