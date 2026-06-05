@@ -18,7 +18,7 @@
 ## 合格条件
 - `tb_rxuartlite.v` 内のチェックで `TB_FAIL` が 0 件であること
 - 最終サマリに `fail=0` と表示されること
-- シミュレーションログに `TB_PATH`、`TB_INFO`、`TB_DUT_PATH` が含まれること
+- シミュレーションログに `TB_PATH`、`TB_CASE`、`TB_INFO`、`TB_DUT_PATH`、`TB_SUMMARY` が含まれること
 
 ## Vivadoでの実行手順
 1. Vivado プロジェクトを開く。
@@ -36,12 +36,11 @@ Vivado 実行時のログを以下に示す。
 
 ```text
 [0] TB_PATH: simulation start
-[5000] TB_DUT_PATH: UNKNOWN -> IDLE
 [635000] TB_PASS: rx_wr must stay 0 during idle before reception
+[635000] TB_PATH: CASE1 normal receive start
 [635000] TB_CASE: send_8n1 data=0x55
 [755000] TB_DUT_PATH: IDLE -> BIT_ZERO
 [915000] TB_DUT_PATH: BIT_ZERO -> BIT_ONE
-run all
 [1075000] TB_DUT_PATH: BIT_ONE -> BIT_TWO
 [1235000] TB_DUT_PATH: BIT_TWO -> BIT_THREE
 [1395000] TB_DUT_PATH: BIT_THREE -> BIT_FOUR
@@ -55,23 +54,8 @@ run all
 [2195000] TB_DUT_PATH: STOP -> WAIT
 [2196000] TB_PASS: rx_wr must be a one-clock pulse
 [2205000] TB_DUT_PATH: WAIT -> IDLE
-[2715000] TB_CASE: send_8n1 data=0x00
-[4266000] TB_PASS: rx_wr must assert after a valid 8N1 frame
-[4266000] TB_INFO: rx_wr=1 rx_data=0x00 expected=0x00
-[4266000] TB_PASS: rx_data must match transmitted byte
-[4276000] TB_PASS: rx_wr must be a one-clock pulse
-[4795000] TB_CASE: send_8n1 data=0xff
-[6346000] TB_PASS: rx_wr must assert after a valid 8N1 frame
-[6346000] TB_INFO: rx_wr=1 rx_data=0xff expected=0xff
-[6346000] TB_PASS: rx_data must match transmitted byte
-[6356000] TB_PASS: rx_wr must be a one-clock pulse
-[6875000] TB_CASE: send_8n1 data=0xa5
-[8426000] TB_PASS: rx_wr must assert after a valid 8N1 frame
-[8426000] TB_INFO: rx_wr=1 rx_data=0xa5 expected=0xa5
-[8426000] TB_PASS: rx_data must match transmitted byte
-[8436000] TB_PASS: rx_wr must be a one-clock pulse
-[8955000] TB_SUMMARY: pass=13 fail=0
-[8955000] TB_RESULT: PASS
+[2715000] TB_SUMMARY: pass=4 fail=0
+[2715000] TB_RESULT: PASS
 ```
 
 ## 評価結果まとめ
@@ -97,7 +81,7 @@ run all
   - `rx_line`
   - `rx_data`
   - `rx_wr`
-- 推奨表示時間帯: `1.0 us` から `1.2 us`
+- 推奨表示時間帯: `0.5 us` から `2.5 us`
 - 説明:
   - 正常な送受信により `rx_data=0x55`、`rx_wr=1`となることを確認した。
 
