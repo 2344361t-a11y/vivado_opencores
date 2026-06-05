@@ -1,17 +1,18 @@
 `timescale 1ns/1ps
 `default_nettype none
 
-module tb_txuartlite_case1_only;
+module tb_txuartlite_case1_only_20260605_1330;
 
     localparam integer CLK_PERIOD_NS   = 10;
     localparam [4:0]   TIMING_BITS_TB  = 5'd5;
     localparam [4:0]   CLOCKS_PER_BAUD = 5'd10;
 
-    reg         i_clk;
-    reg         i_wr;
-    reg  [7:0]  i_data;
-    wire        o_uart_tx;
-    wire        o_busy;
+    // Testbench-side signal names based on the block diagram.
+    reg         tb_clk;
+    reg         tx_wr;
+    reg  [7:0]  tx_data;
+    wire        tx_line;
+    wire        tx_busy;
 
     integer pass_count;
     integer fail_count;
@@ -25,16 +26,16 @@ module tb_txuartlite_case1_only;
         .TIMING_BITS(TIMING_BITS_TB),
         .CLOCKS_PER_BAUD(CLOCKS_PER_BAUD)
     ) dut (
-        .i_clk(i_clk),
-        .i_wr(i_wr),
-        .i_data(i_data),
-        .o_uart_tx(o_uart_tx),
-        .o_busy(o_busy)
+        .i_clk(tb_clk),
+        .i_wr(tx_wr),
+        .i_data(tx_data),
+        .o_uart_tx(tx_line),
+        .o_busy(tx_busy)
     );
 
     initial begin
-        i_clk = 1'b0;
-        forever #(CLK_PERIOD_NS/2) i_clk = ~i_clk;
+        tb_clk = 1'b0;
+        forever #(CLK_PERIOD_NS/2) tb_clk = ~tb_clk;
     end
 
     function [127:0] state_name;
@@ -57,7 +58,7 @@ module tb_txuartlite_case1_only;
         end
     endfunction
 
-    always @(posedge i_clk) begin
+    always @(posedge tb_clk) begin
         #1;
         if (last_state !== dut.state) begin
             $display("[%0t] TB_DUT_PATH: %0s -> %0s", $time, state_name(last_state), state_name(dut.state));
@@ -97,21 +98,21 @@ module tb_txuartlite_case1_only;
 
     task wait_idle;
         begin
-            while (o_busy !== 1'b0)
-                @(posedge i_clk);
-            @(negedge i_clk);
+            while (tx_busy !== 1'b0)
+                @(posedge tb_clk);
+            @(negedge tb_clk);
         end
     endtask
 
     task start_write_55;
         begin
             wait_idle();
-            i_data = 8'h55;
-            i_wr   = 1'b1;
-            @(posedge i_clk);
+            tx_data = 8'h55;
+            tx_wr   = 1'b1;
+            @(posedge tb_clk);
             #1;
-            $display("[%0t] TB_CASE: CASE1 pulse_write data=0x55", $time);
-            $display("[%0t] TB_INFO: i_wr=1 i_data=0x%02h o_uart_tx=%0b o_busy=%0b", $time, i_data, o_uart_tx, o_busy);
+            $display("[%0t] TB_CASE: CASE1 pulse_write tx_data=0x55", $time);
+            $display("[%0t] TB_INFO: tx_wr=1 tx_data=0x%02h tx_line=%0b tx_busy=%0b", $time, tx_data, tx_line, tx_busy);
         end
     endtask
 
@@ -119,18 +120,18 @@ module tb_txuartlite_case1_only;
         input expected_bit;
         input [8*120-1:0] label;
         begin
-            @(negedge i_clk);
-            if (o_uart_tx !== expected_bit) begin
+            @(negedge tb_clk);
+            if (tx_line !== expected_bit) begin
                 frame_errors = frame_errors + 1;
                 tb_fail(label);
-                $display("[%0t] TB_INFO: expected_tx=%0b actual_tx=%0b", $time, expected_bit, o_uart_tx);
+                $display("[%0t] TB_INFO: expected_tx_line=%0b actual_tx_line=%0b", $time, expected_bit, tx_line);
             end
-            if (o_busy !== 1'b1) begin
+            if (tx_busy !== 1'b1) begin
                 busy_errors = busy_errors + 1;
-                tb_fail("CASE1 o_busy must stay 1 during transmission");
-                $display("[%0t] TB_INFO: o_busy dropped during frame", $time);
+                tb_fail("CASE1 tx_busy must stay 1 during transmission");
+                $display("[%0t] TB_INFO: tx_busy dropped during frame", $time);
             end
-            @(posedge i_clk);
+            @(posedge tb_clk);
             #1;
         end
     endtask
@@ -146,18 +147,18 @@ module tb_txuartlite_case1_only;
 
     task check_start_period_after_write;
         begin
-            @(negedge i_clk);
-            i_wr = 1'b0;
-            if (o_uart_tx !== 1'b0) begin
+            @(negedge tb_clk);
+            tx_wr = 1'b0;
+            if (tx_line !== 1'b0) begin
                 frame_errors = frame_errors + 1;
                 tb_fail("CASE1 start bit must be 0");
-                $display("[%0t] TB_INFO: start bit expected 0 actual %0b", $time, o_uart_tx);
+                $display("[%0t] TB_INFO: start bit expected 0 actual %0b", $time, tx_line);
             end
-            if (o_busy !== 1'b1) begin
+            if (tx_busy !== 1'b1) begin
                 busy_errors = busy_errors + 1;
-                tb_fail("CASE1 o_busy must be 1 during start bit");
+                tb_fail("CASE1 tx_busy must be 1 during start bit");
             end
-            @(posedge i_clk);
+            @(posedge tb_clk);
             #1;
 
             for (k = 1; k < CLOCKS_PER_BAUD; k = k + 1)
@@ -179,36 +180,36 @@ module tb_txuartlite_case1_only;
             check_start_period_after_write();
 
             for (b = 0; b < 8; b = b + 1)
-                check_bit_period(i_data[b], "CASE1 data bits must be 1,0,1,0,1,0,1,0 in LSB first order");
+                check_bit_period(tx_data[b], "CASE1 data bits must be 1,0,1,0,1,0,1,0 in LSB first order");
 
             check_bit_period(1'b1, "CASE1 stop bit must be 1");
 
             if (frame_errors == before_frame_errors)
                 tb_pass("CASE1 8N1 frame must be 0,1,0,1,0,1,0,1,0,1");
             if (busy_errors == before_busy_errors)
-                tb_pass("CASE1 o_busy must stay 1 during frame");
+                tb_pass("CASE1 tx_busy must stay 1 during frame");
 
-            expect_signal(o_busy, 1'b0, "CASE1 o_busy must clear after stop bit");
-            expect_signal(o_uart_tx, 1'b1, "CASE1 o_uart_tx must return to idle high");
+            expect_signal(tx_busy, 1'b0, "CASE1 tx_busy must clear after stop bit");
+            expect_signal(tx_line, 1'b1, "CASE1 tx_line must return to idle high");
         end
     endtask
 
     initial begin
-        pass_count  = 0;
-        fail_count  = 0;
+        pass_count   = 0;
+        fail_count   = 0;
         frame_errors = 0;
         busy_errors  = 0;
-        last_state  = 4'hx;
-        i_wr        = 1'b0;
-        i_data      = 8'h55;
+        last_state   = 4'hx;
+        tx_wr        = 1'b0;
+        tx_data      = 8'h55;
 
         $display("[%0t] TB_PATH: simulation start", $time);
 
-        repeat (3) @(posedge i_clk);
+        repeat (3) @(posedge tb_clk);
         #1;
         $display("[%0t] TB_PATH: initial settle done", $time);
-        expect_signal(o_uart_tx, 1'b1, "IDLE o_uart_tx must be 1 before CASE1");
-        expect_signal(o_busy, 1'b0, "IDLE o_busy must be 0 before CASE1");
+        expect_signal(tx_line, 1'b1, "IDLE tx_line must be 1 before CASE1");
+        expect_signal(tx_busy, 1'b0, "IDLE tx_busy must be 0 before CASE1");
 
         run_case1_55();
 
