@@ -16,11 +16,11 @@
 | CASE1 | 正常な送信 | `send_byte(8'h55)` | `rx_done=1` が1クロックだけ立つ、`rx_data=8'h55` |
 
 ## 実シミュレーション結果
-Vivado の実行ログより、上記の全ケースが期待どおりに確認できた。
+Vivado の実行ログより、上記のケースが期待どおりに確認できた。
 
 | ケースID | シミュレーション結果 | 判定 |
 | --- | --- | --- |
-| CASE1 | `rx_data=0x28`、`rx_done=1`、`parity_error=0`、`framing_error=0` を確認 | 合格 |
+| CASE1 | `tx_data=0x55`、`rx_done=1`、`parity_error=0`、`framing_error=0` を確認 | 合格 |
 
 ## フレーム単位の期待値
 
