@@ -19,3 +19,22 @@ wbuart32/trunk/bench/verilog/speech.hex
 .DS_Store
 Thumbs.db
 __MACOSX/
+# Vivado generated files
+*.wdb
+*.jou
+*.log
+*.str
+*.pb
+*.rpt
+*.dcp
+*.bit
+*.ltx
+
+.Xil/
+*.cache/
+*.hw/
+*.ip_user_files/
+*.sim/
+*.runs/
+*.gen/
+*.srcs/sim_1/behav/
