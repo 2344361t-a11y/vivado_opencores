@@ -2,89 +2,71 @@
 
 ## 評価対象
 - 対象回路:
-  - `uart_tx.v`
-  - `uart_rx.v`
+  - `txuartlite.v`
 - テストベンチ:
-  - `tb_uart_loopback.v`
+  - `tb_txuartlite.v`
 
 ## 評価目的
-- 選定した RS-232/UART 回路が、期待値表どおりに動作することを確認する。
+- `txuartlite.v` が、期待値表どおりに動作することを確認する。
 - シミュレーションログから、以下の両方が判別できることを確認する。
   - 回路の入出力値
   - 回路本体およびテストベンチの実行パス
 
 ## 評価項目
-- 正常送受信
-- パリティエラー検出
-- フレーミングエラー検出
-- オーバーランエラー検出
-- `data_read` による `data_valid` のクリア
+- 正常送信
+  - `8'h00` の正常送信
+  - `8'hFF` の正常送信
+  - `8'h55` の正常送信
+  - `8'hAA` の正常送信
+- `tx_busy=1` 中に `tx_wr=1` を入力した場合の書き込み無視動作
 
 ## 合格条件
-- `tb_uart_loopback.v` 内のチェックで `TB_FAIL` が 0 件であること
+- `tb_txuartlite.v` 内のチェックで `TB_FAIL` が 0 件であること
 - 最終サマリに `fail=0` と表示されること
-- シミュレーションログに `TB_PATH`、`TB_INFO`、`uart_tx PATH`、`uart_rx PATH` が含まれること
+- 最終結果に `TB_RESULT: PASS` と表示されること。
+- シミュレーションログに `TB_PATH`、`TB_CASE`、`TB_INFO`、`TB_PASS`、`TB_DUT_PATH` が含まれること
 
 ## Vivadoでの実行手順
 1. Vivado プロジェクトを開く。
-2. `tb_uart_loopback.v` を simulation top に設定する。
+2. `tb_txuartlite.v` を simulation top に設定する。
 3. Behavioral Simulation を実行する。
 4. Console ログを保存する。
 5. 以下の信号を含む波形を保存する。
    - `tx_line`
-   - `rx_line`
-   - `rx_data`
-   - `rx_done`
-   - `rx_data_valid`
-   - `rx_parity_error`
-   - `rx_framing_error`
-   - `rx_overrun_error`
+   - `tx_data`
+   - `tx_wr`
+   - `tx_busy`
 
 
 ## シミュレーションログ
 Vivado 実行時のログを以下に示す。
 
 ```text
-[0] TB_PATH: simulation start
-[6000] TB_DUT_PATH: UNKNOWN -> IDLE
-[26000] TB_PATH: initial settle done
-[26000] TB_PASS: IDLE tx_line must be 1 before CASE1
-[26000] TB_PASS: IDLE tx_busy must be 0 before CASE1
-[26000] TB_PATH: CASE1 normal transmit start
-[36000] TB_CASE: CASE1 pulse_write tx_data=0x55
-[36000] TB_INFO: tx_wr=1 tx_data=0x55 tx_line=0 tx_busy=1
-[36000] TB_DUT_PATH: IDLE -> BIT_ZERO
-[136000] TB_DUT_PATH: BIT_ZERO -> BIT_ONE
-[236000] TB_DUT_PATH: BIT_ONE -> BIT_TWO
-[336000] TB_DUT_PATH: BIT_TWO -> BIT_THREE
-[436000] TB_DUT_PATH: BIT_THREE -> BIT_FOUR
-[536000] TB_DUT_PATH: BIT_FOUR -> BIT_FIVE
-[636000] TB_DUT_PATH: BIT_FIVE -> BIT_SIX
-[736000] TB_DUT_PATH: BIT_SIX -> BIT_SEVEN
-[836000] TB_DUT_PATH: BIT_SEVEN -> STOP
-[936000] TB_DUT_PATH: STOP -> STOP_HOLD
-INFO: [USF-XSim-96] XSim completed. Design snapshot 'tb_txuartlite_case1_only_20260605_1330_behav' loaded.
-INFO: [USF-XSim-97] XSim simulation ran for 1000ns
-launch_simulation: Time (s): cpu = 00:00:02 ; elapsed = 00:00:07 . Memory (MB): peak = 3358.094 ; gain = 0.000
-run all
-[1036000] TB_PASS: CASE1 8N1 frame must be 0,1,0,1,0,1,0,1,0,1
-[1036000] TB_PASS: CASE1 tx_busy must stay 1 during frame
-[1036000] TB_PASS: CASE1 tx_busy must clear after stop bit
-[1036000] TB_PASS: CASE1 tx_line must return to idle high
-[1036000] TB_SUMMARY: pass=6 fail=0
-[1036000] TB_RESULT: PASS
+
 ```
 
 ## 評価結果まとめ
-### CASE1 正常送受信
+### CASE1 正常送信(0x00)
 | 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
 | --- | --- | --- | --- | --- |
 | 送受信 | `pulse_start(8'h28)` | `rx_data=8'h28` | `rx_data=8'h28` | 合格 |
 | 受信完了 | `pulse_start(8'h28)` | `rx_done=1` | `rx_done=1` | 合格 |
-| 有効データ保持 | 正常受信後 | `rx_data_valid=1` | `rx_data_valid=1` | 合格 |
-| パリティ異常なし | 正常受信後 | `rx_parity_error=0` | `rx_parity_error=0` | 合格 |
-| フレーミング異常なし | 正常受信後 | `rx_framing_error=0` | `rx_framing_error=0` | 合格 |
-| 読出し後クリア | `pulse_data_read()` 後 | `rx_data_valid=0` | `rx_data_valid=0` | 合格 |
+
+### CASE2 正常送信(0xFF)
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+
+### CASE3 正常送信(0x55)
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+
+### CASE4 正常送信(0xAA)
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+
+### CASE5 正常送受信
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
 
 ### 総括
 | 項目 | 結果 |
@@ -100,14 +82,63 @@ run all
 - 対象ケース: CASE1
 - 推奨表示信号:
   - `tx_line`
-  - `rx_line`
-  - `rx_data`
-  - `rx_done`
-  - `rx_data_valid`
-  - `rx_parity_error`
-  - `rx_framing_error`
+  - `tx_data`
+  - `tx_wr`
+  - `tx_busy`
 - 推奨表示時間帯: `1.0 us` から `1.2 us`
 - 説明:
-  - 正常な送受信により `rx_data=0x28`、`rx_done=1`、`rx_parity_error=0`、`rx_framing_error=0` となることを確認した。
+  - 正常な送受信により `rx_data=0x28`、`rx_done=1` となることを確認した。
 
 ![図1 正常送受信波形](./images/case1.png)
+
+### 図2 正常送受信波形
+- 対象ケース: CASE2
+- 推奨表示信号:
+  - `tx_line`
+  - `tx_data`
+  - `tx_wr`
+  - `tx_busy`
+- 推奨表示時間帯: `1.0 us` から `1.2 us`
+- 説明:
+  - 正常な送受信により `rx_data=0x28`、`rx_done=1` となることを確認した。
+
+![図2 正常送受信波形](./images/case2.png)
+
+### 図3 正常送受信波形
+- 対象ケース: CASE3
+- 推奨表示信号:
+  - `tx_line`
+  - `tx_data`
+  - `tx_wr`
+  - `tx_busy`
+- 推奨表示時間帯: `1.0 us` から `1.2 us`
+- 説明:
+  - 正常な送受信により `rx_data=0x28`、`rx_done=1` となることを確認した。
+
+![図3 正常送受信波形](./images/case3.png)
+
+### 図4 正常送受信波形
+- 対象ケース: CASE4
+- 推奨表示信号:
+  - `tx_line`
+  - `tx_data`
+  - `tx_wr`
+  - `tx_busy`
+- 推奨表示時間帯: `1.0 us` から `1.2 us`
+- 説明:
+  - 正常な送受信により `rx_data=0x28`、`rx_done=1` となることを確認した。
+
+![図4 正常送受信波形](./images/case4.png)
+
+### 図5 正常送受信波形
+- 対象ケース: CASE5
+- 推奨表示信号:
+  - `tx_line`
+  - `tx_data`
+  - `tx_wr`
+  - `tx_busy`
+- 推奨表示時間帯: `1.0 us` から `1.2 us`
+- 説明:
+  - 正常な送受信により `rx_data=0x28`、`rx_done=1` となることを確認した。
+
+![図5 正常送受信波形](./images/case5.png)
