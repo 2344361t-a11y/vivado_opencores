@@ -128,7 +128,7 @@ run all
 ### CASE2 正常受信(0xFF)
 | 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
 | --- | --- | --- | --- | --- |
-| 受信 | `send_8n1(8'hFF)` | `rx_data=8'FF` | `rx_data=8'hFF` | 合格 |
+| 受信 | `send_8n1(8'hFF)` | `rx_data=8'hFF` | `rx_data=8'hFF` | 合格 |
 | 受信完了 | `send_8n1(8'hFF)` | `rx_wr=1` | `rx_wr=1` | 合格 |
 
 ### CASE3 正常受信(0x55)
