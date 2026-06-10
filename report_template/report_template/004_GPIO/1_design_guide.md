@@ -66,7 +66,6 @@
 
 ### エラー動作
 
-
 ### 主要ステータス信号とテスト内容
 #### `data_valid` のセットおよびクリア
 意味:
@@ -91,9 +90,6 @@
 
 ### テストケース
 - `CASE1`: 正常な loopback 送受信
-- `CASE2`: パリティエラーの強制注入
-- `CASE3`: フレーミングエラーの強制注入
-- `CASE4`: 未読データを残したまま2フレーム受信し、オーバーランを確認
 
 ### Vivado Wave で観測すべき主な信号
 - `tx_line`
@@ -102,7 +98,3 @@
 - `rx_busy`
 - `rx_data`
 - `rx_done`
-- `rx_data_valid`
-- `rx_parity_error`
-- `rx_framing_error`
-- `rx_overrun_error`
