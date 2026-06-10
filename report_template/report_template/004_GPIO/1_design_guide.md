@@ -77,10 +77,6 @@
 - `CASE1`
   - 正常受信後に `data_valid=1` になることを確認する。
   - `pulse_data_read()` 後に `data_valid=0` になることを確認する。
-- `CASE4`
-  - 1 回目受信後に `data_valid=1` となることを確認する。
-  - 2 回目受信後も未読のため `data_valid=1` のままであることを確認する。
-  - `pulse_data_read()` 後にクリアされることを確認する。
 
 ## `tb_simple_gpio.v`
 ### 目的
