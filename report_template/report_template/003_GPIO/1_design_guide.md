@@ -1,8 +1,8 @@
-# GPIO回路およびテストベンチ説明書
+# GPIOコントローラおよびテストベンチ説明書
 
 ## 対象ファイル
-- `simple_gpio.v`: GPIO回路
-- `tb_simplegpio.v`: 検証用テストベンチ
+- `gpio_controller.v`: GPIOコントローラ
+- `tb_gpio_controller.v`: 検証用テストベンチ
 
 ## 回路概要
 本回路は，Wishboneバスを介してGPIOピンの入出力方向および出力値を制御するGPIO回路である．GPIOはGeneral Purpose Input/Outputの略であり，外部回路と0または1のデジタル信号をやり取りするための汎用入出力端子である．
