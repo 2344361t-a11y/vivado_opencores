@@ -29,7 +29,7 @@
 つまり、`i_data` に入っている値そのものがそのまま1本の線に出るのではなく、start bit、stop bit を付けたフレームに変換されて送信される。`txuartlite` は、`i_data[7:0]` の値を 8 data bits としてフレームに含め、`o_uart_tx` から順に送信する。正常に送信できた場合に`o_busy`を`0`に戻す。
 
 ## 構成図（ブロック図）
-![RS-232 UART 回路図](./images/txuartlite.png)
+![RS-232 UART 回路図](./images/txuartlite.svg)
 
 ## `txuartlite.v`
 ### 入力信号

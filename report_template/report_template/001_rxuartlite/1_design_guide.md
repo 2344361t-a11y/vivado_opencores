@@ -29,7 +29,7 @@
 つまり、テストベンチで用意した8bitデータの値そのものがそのまま1本の線に出るのではなく、start bitとstop bit を付けた`8N1`フレームに変換されて`i_uart_rx`に入力される。`rxuartlite` はそのフレームから 8 data bits の部分だけを受信データとして取り出し、正常に受信できた場合に `o_data`を更新し，受信完了を示す`o_wr`を1クロックだけ`1`にする。
 
 ## 構成図（ブロック図）
-![RS-232 UART回路図](./images/rxuartlite.png)
+![RS-232 UART回路図](./images/rxuartlite.svg)
 
 
 ## `rxuartlite.v`
