@@ -5,10 +5,19 @@
 - `tb_gpio_controller.v`: 検証用テストベンチ
 
 ## 回路概要
+本回路は、WISHBONE-style bus を介して GPIO の入出力方向、出力値、および入力値の読み出しを制御する 8 bit GPIO コントローラである。
 
+GPIO は、外部回路と 0 または 1 のデジタル信号をやり取りするための汎用入出力端子である。本回路では、gpio[7:0] の 8 本の GPIO ピンを使用する。
 
 ## 実装する処理仕様の概要
+本回路では、wb_addr により操作対象を切り替える。
 
+- wb_addr=0: GPIO の方向設定を扱う。
+- wb_addr=1: GPIO の出力値設定または GPIO 状態読み出しを扱う。
+
+書き込み時は wb_we=1 とし、wb_wdata の値を内部レジスタへ書き込む。wb_addr=0 の場合は direction_reg に書き込み、wb_addr=1 の場合は output_reg に書き込む。
+
+読み出し時は wb_we=0 とし、wb_rdata から値を読み出す。wb_addr=0 の場合は direction_reg の値を読み出し、wb_addr=1 の場合は GPIO ピン状態を読み出す。
 
 ## 構成図（ブロック図）
 ![GPIOコントローラとテストベンチの構成図](./images/gpio.svg)
@@ -48,7 +57,6 @@
 - `bus_write`: bus_accept & wb_we。書き込みアクセスを示す
 
 ### 機能
-### 機能
 - `rst_n=0` のとき、リセット状態となる。
 - リセット時には、`direction_reg`、`output_reg`、`input_data`、`wb_rdata`、`wb_ack`、`read_valid`、`done` を初期化する。
 - `wb_cyc=1` かつ `wb_stb=1` のとき、WISHBONE-style bus アクセスを受け付ける。
@@ -58,94 +66,125 @@
 - `wb_we=1` かつ `wb_addr=1` のとき、`wb_wdata` の値を `output_reg` に書き込む。
 - `wb_we=0` かつ `wb_addr=0` のとき、`direction_reg` の値を `wb_rdata` に出力する。
 - `wb_we=0` かつ `wb_addr=1` のとき、GPIO ピン状態を取り込んだ値を `wb_rdata` に出力する。
-- `wb_we=0` かつ `wb_addr=1` の読み出し時には、GPIO 状態読み出し値を `input_data` に保持する。
+- GPIO 状態読み出し時には、読み出し値を input_data に保持する。
 - GPIO 状態読み出し時には、読み出し値が有効であることを示す `read_valid` を出力する。
 - `direction_reg[n]=1` の GPIO ピンでは、`output_reg[n]` の値を `gpio[n]` へ出力する。
 - `direction_reg[n]=0` の GPIO ピンでは、`gpio[n]` をハイインピーダンス状態とし、DUT 側からは駆動しない。
 - GPIO ピンの値を `gpio_sample_1`、`gpio_sample_2` の 2 段のレジスタに順に取り込む。
 - `busy` により、バスアクセス処理中であることを示す。
 - `ready` により、次のバスアクセスを受け付け可能であることを示す。
-- シミュレーション時には、リセット、方向設定書き込み、出力値書き込み、方向設定読み出し、GPIO 状態読み出しの実行パスをログに出力する。
 
 ### シミュレーションログ出力
-- リセットから待機状態への遷移
-- 送信開始受付
-- 各データ bit の送信
-- パリティ bit の送信
-- フレーム送信完了
+- リセット時の初期化状態をログに出力する。
+- direction register 書き込み時の実行パスをログに出力する。
+- output register 書き込み時の実行パスをログに出力する。
+- direction register 読み出し時の読み出し値をログに出力する。
+- GPIO状態読み出し時の読み出し値をログに出力する。
 
 ### エラー動作
+- 本回路には、専用のエラー出力信号は存在しない。
 
 ### 主要ステータス信号とテスト内容
 #### `wb_ack` の応答確認
 意味:
-- wb_ack は、WISHBONE-style bus アクセスに対する応答信号である。
-- wb_cyc=1 かつ wb_stb=1 によりバスアクセスが有効になったとき、DUT がアクセスを受け付けたことを示す。
-- 書き込み時および読み出し時の両方で確認対象となる。
+- `wb_ack` は、WISHBONE-style bus アクセスに対する応答信号である。
+- `wb_cyc=1` かつ `wb_stb=1` の有効アクセスをDUTが受け付けたことを示す。
 
 テスト内容:
-- `CASE`
-  - 
+- `CASE1` から　`CASE4`
+  - direction register 書き込み時に `wb_ack=1` となることを確認する。
+  - output register 書き込み時に `wb_ack=1` となることを確認する。
+  - direction register 読み出し時に `wb_ack=1` となることを確認する。
+  - GPIO状態読み出し時に `wb_ack=1` となることを確認する。
+
+- `CASE5` , `CASE6`
+  - 無効バスアクセス時に `wb_ack=0`
+
+- `CASE9`
+  - リセット入力時に `wb_ack=0`へ初期化されることを確認する
 
 #### `done` のアクセス完了確認
 意味:
-- done は、バスアクセスの完了を示す信号である。
+- `done` は、バスアクセスの完了を示す信号である。
 - DUT が書き込みまたは読み出しアクセスを受け付けたときに 1 となる。
-- wb_ack とあわせて確認することで、バスアクセスが完了したことを判断できる。
 
 テスト内容:
-- `CASE`
-  - 
+- `CASE1` から `CASE4`
+  - 有効な書き込みおよび読み出しアクセス時に `done=1` となることを確認する。
+- `CASE5` 、 `CASE6`
+  - 無効バスアクセス時に `done=0` となることを確認する。
+- `CASE9`
+  - リセット入力時に `done=0` へ初期化されることを確認する。
 
 #### `read_valid` のGPIO状態読み出し確認
 意味:
-- read_valid は、GPIO 状態読み出し値が有効であることを示す信号である。
-- wb_addr=1 かつ wb_we=0 の GPIO 状態読み出し時に 1 となる。
-- direction register の読み出しでは、GPIO 状態読み出しではないため read_valid は立たない。
+- `read_valid` は、GPIO 状態読み出し値が有効であることを示す信号である。
+- `wb_addr=1` かつ `wb_we=0` の GPIO 状態読み出し時に `1` となる。
 
 テスト内容:
-- `CASE`
-  - 
+- `CASE1` から `CASE4`
+  - GPIO状態読み出し時に `read_valid=1` となることを確認する。
+  - `wb_rdata` および `input_data` が期待値と一致することを確認する。
+- `CASE9`
+  - リセット入力時に `read_valid=0` へ初期化されることを確認する。
 
 #### `busy` のバス処理中確認
 意味:
-- busy は、DUT がバスアクセス処理中であることを示す信号である。
-- wb_cyc=1 かつ wb_stb=1 のアクセス中で、まだ応答が返っていない状態を示す。
-- バスアクセスが処理中であるかを波形上で確認するために使用する。
+- `busy` は、DUT がバスアクセス処理中であることを示す信号である。
+- `wb_cyc=1` かつ `wb_stb=1` で、まだ応答が返っていない状態を示す。
 
 テスト内容:
-- `CASE`
-  - 
+- `CASE1` から `CASE4`
+  - バスアクセス中に `busy` の変化を波形で確認する。
+- `CASE5` 、`CASE6`
+  - 無効バスアクセス時に `busy=0` となることを確認する。
 
 #### `ready` の受付可能状態確認
 意味:
-- ready は、DUT が次のバスアクセスを受け付け可能であることを示す信号である。
-- busy の反対の意味を持ち、バス処理中でないときに 1 となる。
-- リセット解除後や各アクセス完了後に、次のアクセスが可能であることを確認するために使用する。
+- `ready` は、DUT が次のバスアクセスを受け付け可能であることを示す信号である。
+- `busy` の反対の意味を持ち、バス処理中でないときに `1` となる。。
 
 テスト内容:
-- `CASE`
-  - 
+- `RESET`
+  - リセット解除後に `ready=1` となることを確認する。
+- `CASE1` から `CASE4`
+  - 各バスアクセス完了後に `ready=1` へ戻ることを確認する。
+- `CASE5` 、`CASE6`
+  - 無効バスアクセス時に `ready=1` を維持することを確認する。
+- CASE9
+  - リセット解除後に `ready=1` となることを確認する。
 
 ## `tb_gpio_controller.v`
 ### 目的
-- 案件で要求される主要機能を一通り検証する
+- 主要機能を一通り検証する
 - 実行パスをシミュレーションログに残す
 - 回路の入出力値をシミュレーションログに残す
 
 ### テストケース
-- `CASE1`: 正常な動作
-- `CASE2`: 正常な動作
-- `CASE3`: 正常な動作
-- `CASE4`: 正常な動作
-- `CASE5`: 異常入力
-- `CASE6`: 異常入力
-- `CASE7`: 異常入力
+- `RESET`: リセット後の初期状態の確認
+- `CASE1`: 下位4bit出力・上位4bit入力の確認
+- `CASE2`: 上位4bit出力・下位4bit入力の確認
+- `CASE3`: 全GPIO入力の確認
+- `CASE4`: 全GPIO出力の確認
+- `CASE5`: wb_cyc のみ有効な無効アクセスの確認
+- `CASE6`: wb_stb のみ有効な無効アクセスの確認
+- `CASE7`: 動作途中リセットの確認
 
 ### Vivado Wave で観測すべき主な信号
-- `tx_line`
-- `rx_line`
-- `tx_busy`
-- `rx_busy`
-- `rx_data`
-- `rx_done`
+- `clk`
+- `rst_n`
+- `wb_cyc`
+- `wb_stb`
+- `wb_addr`
+- `wb_we`
+- `wb_wdata[7:0]`
+- `wb_rdata[7:0]`
+- `wb_ack`
+- `done`
+- `direction_reg[7:0]`
+- `output_reg[7:0]`
+- `gpio[7:0]`
+- `input_data[7:0]`
+- `read_valid`
+- `ready`
+- `busy`
