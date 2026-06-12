@@ -2,81 +2,36 @@
 
 ## テスト条件
 - クロック周期: `10 ns`
-- `CLKS_PER_BIT`: `10`
-- UART 1bit期間: `100 ns`
-- フレーム形式: `8E1`
-  - スタートビット 1bit
-  - データ 8bit
-  - ストップビット 1bit
+- GPIO幅: `8 bit`
+- 対象GPIO: `gpio[7:0]`
+- バス形式: WISHBONE-style bus
 
 ## 期待値表
 
 | ケースID | テスト目的 | 入力 | 期待される出力 |
 | --- | --- | --- | --- |
-| RESET | リセット後の初期状態確認 | `pulse_start(8'h28)` | `rx_done=1` が1クロックだけ立つ、`rx_data=8'h28`、`rx_data_valid=1`|
-| CASE1 | 正常な送受信 | `pulse_start(8'h28)` | `rx_done=1` が1クロックだけ立つ、`rx_data=8'h28`、`rx_data_valid=1`|
-| CASE2 | 正常な送受信 | `pulse_start(8'h28)` | `rx_done=1` が1クロックだけ立つ、`rx_data=8'h28`、`rx_data_valid=1`|
-| CASE3 | 正常な送受信 | `pulse_start(8'h28)` | `rx_done=1` が1クロックだけ立つ、`rx_data=8'h28`、`rx_data_valid=1`|
-| CASE4 | 正常な送受信 | `pulse_start(8'h28)` | `rx_done=1` が1クロックだけ立つ、`rx_data=8'h28`、`rx_data_valid=1`|
-| CASE5 | 正常な送受信 | `pulse_start(8'h28)` | `rx_done=1` が1クロックだけ立つ、`rx_data=8'h28`、`rx_data_valid=1`|
-| CASE6 | 正常な送受信 | `pulse_start(8'h28)` | `rx_done=1` が1クロックだけ立つ、`rx_data=8'h28`、`rx_data_valid=1`|
-| CASE7 | 正常な送受信 | `pulse_start(8'h28)` | `rx_done=1` が1クロックだけ立つ、`rx_data=8'h28`、`rx_data_valid=1`|
+| RESET | リセット後の初期状態確認 |  | `ready=1`、`wb_ack=0`、`direction_reg=8'h00` |
+| CASE1 | 下位4bit出力・上位4bit入力の確認 |  | `direction_reg=8'h0F`、`output_reg=8'h05`、`wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` |
+| CASE2 | 上位4bit出力・下位4bit入力の確認 |  | `direction_reg=8'hF0`、`output_reg=8'hC0`、`wb_rdata=8'hCA`、`input_data=8'hCA`、`read_valid=1` |
+| CASE3 | 全GPIO入力の確認 |  | `direction_reg=8'h00`、`output_reg=8'hFF`、`wb_rdata=8'h3C`、`input_data=8'h3C`、`read_valid=1` |
+| CASE4 | 全GPIO出力の確認 |  | `direction_reg=8'hFF`、`output_reg=8'h96`、`wb_rdata=8'h96`、`input_data=8'h96`、`read_valid=1` |
+| CASE5 | wb_cyc のみ有効な無効アクセス確認 |  | `wb_ack=0`、`done=0`、`busy=0`、`ready=1`、`direction_reg` と `output_reg` は変化しない |
+| CASE6 | wb_stb のみ有効な無効アクセス確認 |  | `wb_ack=0`、`done=0`、`busy=0`、`ready=1`、`direction_reg` と `output_reg` は変化しない |
+| CASE7 | 動作途中リセット確認 |  | `direction_reg=8'h00`、`output_reg=8'h00`、`input_data=8'h00`、`wb_rdata=8'h00`、`wb_ack=0`、`done=0`、`read_valid=0`、リセット解除後 `ready=1` |
 
 ## 実シミュレーション結果
 Vivado の実行ログより、上記の全ケースが期待どおりに確認できた。
 
 | ケースID | シミュレーション結果 | 判定 |
 | --- | --- | --- |
-| RESET | `rx_data=0x28`、`rx_done=1` を確認 | 合格 |
-| CASE1 | `rx_data=0x28`、`rx_done=1` を確認 | 合格 |
-| CASE2 | `rx_data=0x28`、`rx_done=1` を確認 | 合格 |
-| CASE3 | `rx_data=0x28`、`rx_done=1` を確認 | 合格 |
-| CASE4 | `rx_data=0x28`、`rx_done=1` を確認 | 合格 |
-| CASE5 | `rx_data=0x28`、`rx_done=1` を確認 | 合格 |
-| CASE6 | `rx_data=0x28`、`rx_done=1` を確認 | 合格 |
-| CASE7 | `rx_data=0x28`、`rx_done=1` を確認 | 合格 |
-
-## フレーム単位の期待値
-
-### RESET: データ `8'h28`
-- 2進数表現: `0010_1000`
-- LSB first の送信順: `0,0,0,1,0,1,0,0`
-- フレーム全体: `0(start), 0,0,0,1,0,1,0,0, 0(parity), 1(stop)`
-
-### CASE1: データ `8'h28`
-- 2進数表現: `0010_1000`
-- LSB first の送信順: `0,0,0,1,0,1,0,0`
-- フレーム全体: `0(start), 0,0,0,1,0,1,0,0, 0(parity), 1(stop)`
-
-### CASE2: データ `8'h28`
-- 2進数表現: `0010_1000`
-- LSB first の送信順: `0,0,0,1,0,1,0,0`
-- フレーム全体: `0(start), 0,0,0,1,0,1,0,0, 0(parity), 1(stop)`
-
-### CASE3: データ `8'h28`
-- 2進数表現: `0010_1000`
-- LSB first の送信順: `0,0,0,1,0,1,0,0`
-- フレーム全体: `0(start), 0,0,0,1,0,1,0,0, 0(parity), 1(stop)`
-
-### CASE4: データ `8'h28`
-- 2進数表現: `0010_1000`
-- LSB first の送信順: `0,0,0,1,0,1,0,0`
-- フレーム全体: `0(start), 0,0,0,1,0,1,0,0, 0(parity), 1(stop)`
-
-### CASE5: データ `8'h28`
-- 2進数表現: `0010_1000`
-- LSB first の送信順: `0,0,0,1,0,1,0,0`
-- フレーム全体: `0(start), 0,0,0,1,0,1,0,0, 0(parity), 1(stop)`
-
-### CASE6: データ `8'h28`
-- 2進数表現: `0010_1000`
-- LSB first の送信順: `0,0,0,1,0,1,0,0`
-- フレーム全体: `0(start), 0,0,0,1,0,1,0,0, 0(parity), 1(stop)`
-
-### CASE7: データ `8'h28`
-- 2進数表現: `0010_1000`
-- LSB first の送信順: `0,0,0,1,0,1,0,0`
-- フレーム全体: `0(start), 0,0,0,1,0,1,0,0, 0(parity), 1(stop)`
+| RESET | `ready=1`、`wb_ack=0`、`direction_reg=8'h00` を確認 | 合格 |
+| CASE1 | `direction_reg=8'h0F`、`output_reg=8'h05`、`wb_rdata=8'hA5`、`input_data=8'hA5` を確認 | 合格 |
+| CASE2 | `direction_reg=8'hF0`、`output_reg=8'hC0`、`wb_rdata=8'hCA`、`input_data=8'hCA` を確認 | 合格 |
+| CASE3 | `direction_reg=8'h00`、`output_reg=8'hFF`、`wb_rdata=8'h3C`、`input_data=8'h3C` を確認 | 合格 |
+| CASE4 | `direction_reg=8'hFF`、`output_reg=8'h96`、`wb_rdata=8'h96`、`input_data=8'h96` を確認 | 合格 |
+| CASE5 | `wb_cyc=1`、`wb_stb=0` のとき、`wb_ack=0`、`done=0`、`busy=0`、`ready=1`、レジスタ不変を確認 | 合格 |
+| CASE6 | `wb_cyc=0`、`wb_stb=1` のとき、`wb_ack=0`、`done=0`、`busy=0`、`ready=1`、レジスタ不変を確認 | 合格 |
+| CASE7 | 動作途中リセットにより、内部レジスタおよびステータス信号が初期化されることを確認 | 合格 |
 
 ## 期待されるログ出力
 - DUT:

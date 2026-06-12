@@ -7,19 +7,25 @@
   - `tb_gpio_controller.v`
 
 ## 評価目的
-- 選定した GPIO 回路が、期待値表どおりに動作することを確認する。
+- GPIOコントローラが、期待値表どおりに動作することを確認する。
 - シミュレーションログから、以下の両方が判別できることを確認する。
   - 回路の入出力値
   - 回路本体およびテストベンチの実行パス
 
 ## 評価項目
-- 正常送受信
-- `data_read` による `data_valid` のクリア
+- リセット後の初期状態確認
+- 下位4bit出力・上位4bit入力の確認
+- 上位4bit出力・下位4bit入力の確認
+- 全GPIO入力の確認
+- 全GPIO出力の確認
+- wb_cyc のみ有効な無効アクセス確認
+- wb_stb のみ有効な無効アクセス確認
+- 動作途中リセット確認
 
 ## 合格条件
 - `tb_gpio_controller.v` 内のチェックで `TB_FAIL` が 0 件であること
 - 最終サマリに `fail=0` と表示されること
-- シミュレーションログに `TB_PATH`、`TB_INFO`、`uart_tx PATH`、`uart_rx PATH` が含まれること
+- シミュレーションログに `TB_PATH`、`TB_INFO`、`GPIO_CTRL PATH` が含まれること
 
 ## Vivadoでの実行手順
 1. Vivado プロジェクトを開く。
@@ -27,11 +33,23 @@
 3. Behavioral Simulation を実行する。
 4. Console ログを保存する。
 5. 以下の信号を含む波形を保存する。
-   - `tx_line`
-   - `rx_line`
-   - `rx_data`
-   - `rx_done`
-
+   - `clk`
+   - `rst_n`
+   - `wb_cyc`
+   - `wb_stb`
+   - `wb_addr`
+   - `wb_we`
+   - `wb_wdata[7:0]`
+   - `wb_rdata[7:0]`
+   - `wb_ack`
+   - `done`
+   - `direction_reg[7:0]`
+   - `output_reg[7:0]`
+   - `gpio[7:0]`
+   - `input_data[7:0]`
+   - `read_valid`
+   - `ready`
+   - `busy`
 ## シミュレーションログ
 Vivado 実行時のログを以下に示す。
 
@@ -186,13 +204,76 @@ Vivado 実行時のログを以下に示す。
 ```
 
 ## 評価結果まとめ
-### CASE1 正常送受信
+### RESET 初期状態確認
 | 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
 | --- | --- | --- | --- | --- |
-| 送受信 | `pulse_start(8'h28)` | `rx_data=8'h28` | `rx_data=8'h28` | 合格 |
-| 受信完了 | `pulse_start(8'h28)` | `rx_done=1` | `rx_done=1` | 合格 |
-| 有効データ保持 | 正常受信後 | `rx_data_valid=1` | `rx_data_valid=1` | 合格 |
-| 読出し後クリア | `pulse_data_read()` 後 | `rx_data_valid=0` | `rx_data_valid=0` | 合格 |
+| 受付可能状態 | リセット解除後 | `ready=1` | `ready=1` | 合格 |
+| バス応答 | リセット後 | `wb_ack=0` | `wb_ack=0` | 合格 |
+| GPIO方向設定 | リセット後 | `direction_reg=8'h00` | `direction_reg=8'h00` | 合格 |
+
+### CASE1 下位4bit出力・上位4bit入力
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+| 方向設定 | `direction_reg=8'h0F` | `direction_reg=8'h0F` | `direction_reg=8'h0F` | 合格 |
+| 出力値設定 | `output_reg=8'h05` | `output_reg=8'h05` | `output_reg=8'h05` | 合格 |
+| GPIO状態読み出し | 外部入力 `8'hA0` | `wb_rdata=8'hA5` | `wb_rdata=8'hA5` | 合格 |
+| 読み出し値保持 | GPIO状態読み出し後 | `input_data=8'hA5` | `input_data=8'hA5` | 合格 |
+| 読み出し有効 | GPIO状態読み出し時 | `read_valid=1` | `read_valid=1` | 合格 |
+
+### CASE2 上位4bit出力・下位4bit入力
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+| 方向設定 | `direction_reg=8'hF0` | `direction_reg=8'hF0` | `direction_reg=8'hF0` | 合格 |
+| 出力値設定 | `output_reg=8'hC0` | `output_reg=8'hC0` | `output_reg=8'hC0` | 合格 |
+| GPIO状態読み出し | 外部入力 `8'h0A` | `wb_rdata=8'hCA` | `wb_rdata=8'hCA` | 合格 |
+| 読み出し値保持 | GPIO状態読み出し後 | `input_data=8'hCA5` | `input_data=8'hCA` | 合格 |
+| 読み出し有効 | GPIO状態読み出し時 | `read_valid=1` | `read_valid=1` | 合格 |
+
+### CASE3 全GPIO入力
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+| 方向設定 | `direction_reg=8'h00` | `direction_reg=8'h00` | `direction_reg=8'h00` | 合格 |
+| 出力値設定 | `output_reg=8'hFF` | `output_reg=8'hFF` | `output_reg=8'hFF` | 合格 |
+| GPIO状態読み出し | 外部入力 `8'h3C` | `wb_rdata=8'h3C` | `wb_rdata=8'h3C` | 合格 |
+| 読み出し値保持 | GPIO状態読み出し後 | `input_data=8'h3C` | `input_data=8'h3C` | 合格 |
+| 読み出し有効 | GPIO状態読み出し時 | `read_valid=1` | `read_valid=1` | 合格 |
+
+### CASE4 全GPIO出力
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+| 方向設定 | `direction_reg=8'hFF` | `direction_reg=8'hFF` | `direction_reg=8'hFF` | 合格 |
+| 出力値設定 | `output_reg=8'h96` | `output_reg=8'h096` | `output_reg=8'h96` | 合格 |
+| GPIO状態読み出し | 全GPIO出力 | `wb_rdata=8'h96` | `wb_rdata=8'h96` | 合格 |
+| 読み出し値保持 | GPIO状態読み出し後 | `input_data=8'h96` | `input_data=8'h96` | 合格 |
+| 読み出し有効 | GPIO状態読み出し時 | `read_valid=1` | `read_valid=1` | 合格 |
+
+### CASE5 `wb_cyc` のみ有効な無効アクセス
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+| バス応答 | `wb_cyc=1`, `wb_stb=0` | `wb_ack=0` | `wb_ack=0` | 合格 |
+| 完了信号 | `wb_cyc=1`, `wb_stb=0` | `done=0` | `done=0` | 合格 |
+| 処理中信号 | `wb_cyc=1`, `wb_stb=0` | `busy=0` | `busy=0` | 合格 |
+| 受付可能状態 | `wb_cyc=1`, `wb_stb=0` | `ready=1` | `ready=1` | 合格 |
+| レジスタ保持 | 無効アクセス後 | `direction_reg`、`output_reg` が変化しない | 変化なし | 合格 |
+
+### CASE6 `wb_stb` のみ有効な無効アクセス
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+| バス応答 | `wb_cyc=0`, `wb_stb=1` | `wb_ack=0` | `wb_ack=0` | 合格 |
+| 完了信号 | `wb_cyc=0`, `wb_stb=1` | `done=0` | `done=0` | 合格 |
+| 処理中信号 | `wb_cyc=0`, `wb_stb=1` | `busy=0` | `busy=0` | 合格 |
+| 受付可能状態 | `wb_cyc=0`, `wb_stb=1` | `ready=1` | `ready=1` | 合格 |
+| レジスタ保持 | 無効アクセス後 | `direction_reg`、`output_reg` が変化しない | 変化なし | 合格 |
+
+### CASE7 動作途中リセット
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| リセット前方向設定 | `direction_reg=8'hAA` | `direction_reg=8'hAA` | `direction_reg=8'hAA` | 合格 |
+| リセット前出力設定 | `output_reg=8'h55` | `output_reg=8'h55` | `output_reg=8'h55` | 合格 |
+| 方向設定初期化 | `rst_n=0` | `direction_reg=8'h00` | `direction_reg=8'h00` | 合格 |
+| 出力値初期化 | `rst_n=0` | `output_reg=8'h00` | `output_reg=8'h00` | 合格 |
+| 入力値初期化 | `rst_n=0` | `input_data=8'h00` | `input_data=8'h00` | 合格 |
+| 読み出しデータ初期化 | `rst_n=0` | `wb_rdata=8'h00` | `wb_rdata=8'h00` | 合格 |
+| ステータス初期化 | `rst_n=0` | `wb_ack=0`, `done=0`, `read_valid=0` | `wb_ack=0`, `done=0`, `read_valid=0` | 合格 |
 
 ### 総括
 | 項目 | 結果 |
@@ -203,6 +284,72 @@ Vivado 実行時のログを以下に示す。
 | 結論 | 対象回路の主要機能は期待値どおりに動作したことを確認した |
 
 ## 波形キャプチャ貼付欄
+
+### 図1 RESET 初期状態確認
+- 対象ケース: RESET
+- 推奨表示信号:
+  - `clk`
+  - `rst_n`
+  - `direction_reg[7:0]`
+  - `output_reg[7:0]`
+  - `input_data[7:0]`
+  - `wb_rdata[7:0]`
+  - `wb_ack`
+  - `done`
+  - `read_valid`
+  - `ready`
+  - `busy`
+- 推奨表示時間帯: `0 ns` から `40 ns`
+- 説明:
+  - `rst_n=0` によりリセットを入力し、リセット解除後に `ready=1`、`wb_ack=0`、`direction_reg=8'h00` となることを確認した。
+
+![図1 初期状態波形](./images/reset.png)
+
+### 図2 CASE1 下位4bit出力・上位4bit入力波形
+- 対象ケース: CASE1
+- 推奨表示信号:
+  - `wb_cyc`
+  - `wb_stb`
+  - `wb_addr`
+  - `wb_we`
+  - `wb_wdata`
+  - `wb_rdata`
+  - `wb_ack`
+  - `done`
+  - `direction_reg`
+  - `outpot_reg`
+  - `gpio`
+  - `input_data`
+  - `read_valid`
+- 推奨表示時間帯: `36 ns` から `150 ns`
+- 説明:
+  - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
+  - 波形より、GPIO状態読み出し時に `wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` となることを確認した。
+
+![図2 下位4bit出力・上位4bit入力波形](./images/case1.png)
+
+### 図3 CASE2 上位4bit出力・下位4bit入力
+- 対象ケース: CASE2
+- 推奨表示信号:
+  - `wb_cyc`
+  - `wb_stb`
+  - `wb_addr`
+  - `wb_we`
+  - `wb_wdata`
+  - `wb_rdata`
+  - `wb_ack`
+  - `done`
+  - `direction_reg`
+  - `outpot_reg`
+  - `gpio`
+  - `input_data`
+  - `read_valid`
+- 推奨表示時間帯: `36 ns` から `150 ns`
+- 説明:
+  - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
+  - 波形より、GPIO状態読み出し時に `wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` となることを確認した。
+
+![図3 上位4bit出力・下位4bit入力入力波形](./images/case2.png)
 
 ### 図1 下位4bit出力・上位4bit入力波形
 - 対象ケース: CASE1
@@ -222,6 +369,53 @@ Vivado 実行時のログを以下に示す。
   - `read_valid`
 - 推奨表示時間帯: `36 ns` から `150 ns`
 - 説明:
-  - 正常な送受信により `rx_data=0x28`、`rx_done=1` となることを確認した。
+  - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
+  - 波形より、GPIO状態読み出し時に `wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` となることを確認した。
+
+![図1 下位4bit出力・上位4bit入力波形](./images/case1.png)
+
+### 図1 下位4bit出力・上位4bit入力波形
+- 対象ケース: CASE1
+- 推奨表示信号:
+  - `wb_cyc`
+  - `wb_stb`
+  - `wb_addr`
+  - `wb_we`
+  - `wb_wdata`
+  - `wb_rdata`
+  - `wb_ack`
+  - `done`
+  - `direction_reg`
+  - `outpot_reg`
+  - `gpio`
+  - `input_data`
+  - `read_valid`
+- 推奨表示時間帯: `36 ns` から `150 ns`
+- 説明:
+  - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
+  - 波形より、GPIO状態読み出し時に `wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` となることを確認した。
+
+![図1 下位4bit出力・上位4bit入力波形](./images/case1.png)
+
+### 図1 下位4bit出力・上位4bit入力波形
+- 対象ケース: CASE1
+- 推奨表示信号:
+  - `wb_cyc`
+  - `wb_stb`
+  - `wb_addr`
+  - `wb_we`
+  - `wb_wdata`
+  - `wb_rdata`
+  - `wb_ack`
+  - `done`
+  - `direction_reg`
+  - `outpot_reg`
+  - `gpio`
+  - `input_data`
+  - `read_valid`
+- 推奨表示時間帯: `36 ns` から `150 ns`
+- 説明:
+  - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
+  - 波形より、GPIO状態読み出し時に `wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` となることを確認した。
 
 ![図1 下位4bit出力・上位4bit入力波形](./images/case1.png)
