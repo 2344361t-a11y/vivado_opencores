@@ -11,7 +11,7 @@
 
 
 ## 構成図（ブロック図）
-![GPIOコントローラとテストベンチの構成図](./gpio.svg)
+![GPIOコントローラとテストベンチの構成図](./images/gpio.svg)
 
 ## `gpio_controller.v`
 ### 入力信号
