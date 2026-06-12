@@ -328,7 +328,7 @@ Vivado 実行時のログを以下に示す。
 
 ![図2 下位4bit出力・上位4bit入力波形](./images/case1.png)
 
-### 図3 CASE2 上位4bit出力・下位4bit入力
+### 図3 CASE2 上位4bit出力・下位4bit入力波形
 - 対象ケース: CASE2
 - 推奨表示信号:
   - `wb_cyc`
@@ -344,15 +344,15 @@ Vivado 実行時のログを以下に示す。
   - `gpio`
   - `input_data`
   - `read_valid`
-- 推奨表示時間帯: `36 ns` から `150 ns`
+- 推奨表示時間帯: `146 ns` から `260 ns`
 - 説明:
   - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
   - 波形より、GPIO状態読み出し時に `wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` となることを確認した。
 
 ![図3 上位4bit出力・下位4bit入力入力波形](./images/case2.png)
 
-### 図1 下位4bit出力・上位4bit入力波形
-- 対象ケース: CASE1
+### 図4 CASE3 全GPIO入力波形
+- 対象ケース: CASE3
 - 推奨表示信号:
   - `wb_cyc`
   - `wb_stb`
@@ -367,15 +367,15 @@ Vivado 実行時のログを以下に示す。
   - `gpio`
   - `input_data`
   - `read_valid`
-- 推奨表示時間帯: `36 ns` から `150 ns`
+- 推奨表示時間帯: `256 ns` から `370 ns`
 - 説明:
   - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
   - 波形より、GPIO状態読み出し時に `wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` となることを確認した。
 
-![図1 下位4bit出力・上位4bit入力波形](./images/case1.png)
+![図4 全GPIO入力波形](./images/case3.png)
 
-### 図1 下位4bit出力・上位4bit入力波形
-- 対象ケース: CASE1
+### 図5 CASE4 全GPIO出力波形
+- 対象ケース: CASE4
 - 推奨表示信号:
   - `wb_cyc`
   - `wb_stb`
@@ -390,15 +390,15 @@ Vivado 実行時のログを以下に示す。
   - `gpio`
   - `input_data`
   - `read_valid`
-- 推奨表示時間帯: `36 ns` から `150 ns`
+- 推奨表示時間帯: `366 ns` から `480 ns`
 - 説明:
   - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
   - 波形より、GPIO状態読み出し時に `wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` となることを確認した。
 
-![図1 下位4bit出力・上位4bit入力波形](./images/case1.png)
+![図5 全GPIO出力波形](./images/case4.png)
 
-### 図1 下位4bit出力・上位4bit入力波形
-- 対象ケース: CASE1
+### 図6 CASE5 `wb_cyc` のみ有効な無効アクセス
+- 対象ケース: CASE5
 - 推奨表示信号:
   - `wb_cyc`
   - `wb_stb`
@@ -413,9 +413,9 @@ Vivado 実行時のログを以下に示す。
   - `gpio`
   - `input_data`
   - `read_valid`
-- 推奨表示時間帯: `36 ns` から `150 ns`
+- 推奨表示時間帯: `476 ns` から `500 ns`
 - 説明:
   - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
   - 波形より、GPIO状態読み出し時に `wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` となることを確認した。
 
-![図1 下位4bit出力・上位4bit入力波形](./images/case1.png)
+![図6 `wb_cyc` のみ有効な無効アクセス](./images/case5.png)
