@@ -178,6 +178,95 @@ module tb_gpio_controller;
         end
     endtask
 
+
+    task invalid_bus_access;
+        input [8*32-1:0] case_name;
+        input cyc_value;
+        input stb_value;
+        input addr;
+        input we_value;
+        input [7:0] data;
+        reg [7:0] saved_direction;
+        reg [7:0] saved_output;
+        begin
+            saved_direction = direction_reg;
+            saved_output = output_reg;
+
+            @(negedge clk);
+            wb_addr = addr;
+            wb_wdata = data;
+            wb_we = we_value;
+            wb_cyc = cyc_value;
+            wb_stb = stb_value;
+            $display("[%0t] TB_CASE: %0s invalid_bus_access cyc=%0b stb=%0b addr=%0d we=%0b data=%02h cycle=%0d",
+                     $time, case_name, cyc_value, stb_value, addr, we_value, data, cycle_count);
+
+            @(posedge clk); #1;
+            check(wb_ack === 1'b0, "invalid bus access must not assert wb_ack");
+            check(done === 1'b0, "invalid bus access must not assert done");
+            check(busy === 1'b0, "invalid bus access must not assert busy");
+            check(ready === 1'b1, "invalid bus access must keep ready asserted");
+            check(direction_reg === saved_direction, "invalid bus access must not change direction_reg");
+            check(output_reg === saved_output, "invalid bus access must not change output_reg");
+
+            @(negedge clk);
+            wb_cyc = 1'b0;
+            wb_stb = 1'b0;
+            wb_we = 1'b0;
+            wb_wdata = 8'h00;
+            @(posedge clk); #1;
+        end
+    endtask
+
+    task reset_during_operation;
+        input [8*32-1:0] case_name;
+        begin
+            $display("[%0t] TB_PATH: %0s reset during operation start", $time, case_name);
+
+            bus_write(case_name, 1'b0, 8'hAA);
+            bus_write(case_name, 1'b1, 8'h55);
+            check(direction_reg === 8'hAA, "CASE7 pre-reset direction_reg must be AA");
+            check(output_reg === 8'h55, "CASE7 pre-reset output_reg must be 55");
+
+            @(negedge clk);
+            wb_addr = 1'b0;
+            wb_wdata = 8'h0F;
+            wb_we = 1'b1;
+            wb_cyc = 1'b1;
+            wb_stb = 1'b1;
+            $display("[%0t] TB_CASE: %0s assert reset while bus access is active", $time, case_name);
+            #1;
+            rst_n = 1'b0;
+            #1;
+
+            check(direction_reg === 8'h00, "CASE7 reset must clear direction_reg");
+            check(output_reg === 8'h00, "CASE7 reset must clear output_reg");
+            check(input_data === 8'h00, "CASE7 reset must clear input_data");
+            check(wb_rdata === 8'h00, "CASE7 reset must clear wb_rdata");
+            check(wb_ack === 1'b0, "CASE7 reset must clear wb_ack");
+            check(done === 1'b0, "CASE7 reset must clear done");
+            check(read_valid === 1'b0, "CASE7 reset must clear read_valid");
+
+            wb_cyc = 1'b0;
+            wb_stb = 1'b0;
+            wb_we = 1'b0;
+            wb_wdata = 8'h00;
+            gpio_external_drive = 8'h00;
+            gpio_external_oe = 8'hFF;
+
+            repeat (2) @(posedge clk);
+            @(negedge clk);
+            rst_n = 1'b1;
+            @(posedge clk); #1;
+
+            check(ready === 1'b1, "CASE7 reset release must make ready 1");
+            check(wb_ack === 1'b0, "CASE7 reset release must keep wb_ack 0");
+            check(direction_reg === 8'h00, "CASE7 reset release must keep direction_reg 00");
+            check(output_reg === 8'h00, "CASE7 reset release must keep output_reg 00");
+            check(input_data === 8'h00, "CASE7 reset release must keep input_data 00");
+        end
+    endtask
+
     initial begin
         pass_count = 0;
         fail_count = 0;
@@ -220,6 +309,15 @@ module tb_gpio_controller;
         configure_gpio("CASE4 all output", 8'hFF, 8'h96);
         check(direction_reg === 8'hFF, "CASE4 all pins must be output");
         read_gpio("CASE4 output readback", 8'hFF, 8'h00, 8'h96);
+
+        $display("[%0t] TB_PATH: CASE5 wb_cyc only invalid access start", $time);
+        invalid_bus_access("CASE5 cyc only", 1'b1, 1'b0, 1'b0, 1'b1, 8'h00);
+
+        $display("[%0t] TB_PATH: CASE6 wb_stb only invalid access start", $time);
+        invalid_bus_access("CASE6 stb only", 1'b0, 1'b1, 1'b0, 1'b1, 8'h00);
+
+        $display("[%0t] TB_PATH: CASE7 reset during operation start", $time);
+        reset_during_operation("CASE7 mid reset");
 
         $display("[%0t] TB_SUMMARY: pass=%0d fail=%0d", $time, pass_count, fail_count);
         if (fail_count == 0) $display("Good.");
