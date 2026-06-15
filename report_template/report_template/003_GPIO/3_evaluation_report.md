@@ -291,15 +291,21 @@ Vivado 実行時のログを以下に示す。
 - 推奨表示信号:
   - `clk`
   - `rst_n`
+  - `wb_cyc`
+  - `wb_stb`
+  - `wb_addr`
+  - `wb_we`
+  - `wb_wdata[7:0]`
+  - `wb_rdata[7:0]`
+  - `wb_ack`
+  - `gpio[7:0]`
   - `direction_reg[7:0]`
   - `output_reg[7:0]`
   - `input_data[7:0]`
-  - `wb_rdata[7:0]`
-  - `wb_ack`
-  - `done`
   - `read_valid`
-  - `ready`
+  - `done`
   - `busy`
+  - `ready`
 - 推奨表示時間帯: `0 ns` から `40 ns`
 - 説明:
   - `rst_n=0` によりリセットを入力し、リセット解除後に `ready=1`、`wb_ack=0`、`direction_reg=8'h00` となることを確認した。
@@ -309,19 +315,23 @@ Vivado 実行時のログを以下に示す。
 ### 図2 CASE1 下位4bit出力・上位4bit入力波形
 - 対象ケース: CASE1
 - 推奨表示信号:
+  - `clk`
+  - `rst_n`
   - `wb_cyc`
   - `wb_stb`
   - `wb_addr`
   - `wb_we`
-  - `wb_wdata`
-  - `wb_rdata`
+  - `wb_wdata[7:0]`
+  - `wb_rdata[7:0]`
   - `wb_ack`
-  - `done`
-  - `direction_reg`
-  - `outpot_reg`
-  - `gpio`
-  - `input_data`
+  - `gpio[7:0]`
+  - `direction_reg[7:0]`
+  - `output_reg[7:0]`
+  - `input_data[7:0]`
   - `read_valid`
+  - `done`
+  - `busy`
+  - `ready`
 - 推奨表示時間帯: `36 ns` から `150 ns`
 - 説明:
   - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
@@ -332,91 +342,164 @@ Vivado 実行時のログを以下に示す。
 ### 図3 CASE2 上位4bit出力・下位4bit入力波形
 - 対象ケース: CASE2
 - 推奨表示信号:
+  - `clk`
+  - `rst_n`
   - `wb_cyc`
   - `wb_stb`
   - `wb_addr`
   - `wb_we`
-  - `wb_wdata`
-  - `wb_rdata`
+  - `wb_wdata[7:0]`
+  - `wb_rdata[7:0]`
   - `wb_ack`
-  - `done`
-  - `direction_reg`
-  - `outpot_reg`
-  - `gpio`
-  - `input_data`
+  - `gpio[7:0]`
+  - `direction_reg[7:0]`
+  - `output_reg[7:0]`
+  - `input_data[7:0]`
   - `read_valid`
+  - `done`
+  - `busy`
+  - `ready`
 - 推奨表示時間帯: `146 ns` から `260 ns`
 - 説明:
-  - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
-  - 波形より、GPIO状態読み出し時に `wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` となることを確認した。
+  - `direction_reg=8'hF0`、`output_reg=8'hC0` を設定し、外部入力として `8'hA0` を与えた。
+  - 波形より、GPIO状態読み出し時に `wb_rdata=8'hCA`、`input_data=8'hCA`、`read_valid=1` となることを確認した。
 
 ![図3 上位4bit出力・下位4bit入力入力波形](./images/case2.png)
 
 ### 図4 CASE3 全GPIO入力波形
 - 対象ケース: CASE3
 - 推奨表示信号:
+  - `clk`
+  - `rst_n`
   - `wb_cyc`
   - `wb_stb`
   - `wb_addr`
   - `wb_we`
-  - `wb_wdata`
-  - `wb_rdata`
+  - `wb_wdata[7:0]`
+  - `wb_rdata[7:0]`
   - `wb_ack`
-  - `done`
-  - `direction_reg`
-  - `outpot_reg`
-  - `gpio`
-  - `input_data`
+  - `gpio[7:0]`
+  - `direction_reg[7:0]`
+  - `output_reg[7:0]`
+  - `input_data[7:0]`
   - `read_valid`
+  - `done`
+  - `busy`
+  - `ready`
 - 推奨表示時間帯: `256 ns` から `370 ns`
 - 説明:
-  - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
-  - 波形より、GPIO状態読み出し時に `wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` となることを確認した。
+  - `direction_reg=8'h00`、`output_reg=8'hFF` を設定し、外部入力として `8'h3C` を与えた。
+  - 波形より、GPIO状態読み出し時に `wb_rdata=8'h3C`、`input_data=8'h3C` となることを確認した。
 
 ![図4 全GPIO入力波形](./images/case3.png)
 
 ### 図5 CASE4 全GPIO出力波形
 - 対象ケース: CASE4
 - 推奨表示信号:
+  - `clk`
+  - `rst_n`
   - `wb_cyc`
   - `wb_stb`
   - `wb_addr`
   - `wb_we`
-  - `wb_wdata`
-  - `wb_rdata`
+  - `wb_wdata[7:0]`
+  - `wb_rdata[7:0]`
   - `wb_ack`
-  - `done`
-  - `direction_reg`
-  - `outpot_reg`
-  - `gpio`
-  - `input_data`
+  - `gpio[7:0]`
+  - `direction_reg[7:0]`
+  - `output_reg[7:0]`
+  - `input_data[7:0]`
   - `read_valid`
+  - `done`
+  - `busy`
+  - `ready`
 - 推奨表示時間帯: `366 ns` から `480 ns`
 - 説明:
-  - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
-  - 波形より、GPIO状態読み出し時に `wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` となることを確認した。
+  - `direction_reg=8'hFF`、`output_reg=8'h96` を設定した。
+  - 波形より、GPIO状態読み出し時に `wb_rdata=8'h96`、`input_data=8'h96` となることを確認した。
 
 ![図5 全GPIO出力波形](./images/case4.png)
 
 ### 図6 CASE5 `wb_cyc` のみ有効な無効アクセス
 - 対象ケース: CASE5
 - 推奨表示信号:
+  - `clk`
+  - `rst_n`
   - `wb_cyc`
   - `wb_stb`
   - `wb_addr`
   - `wb_we`
-  - `wb_wdata`
-  - `wb_rdata`
+  - `wb_wdata[7:0]`
+  - `wb_rdata[7:0]`
   - `wb_ack`
-  - `done`
-  - `direction_reg`
-  - `outpot_reg`
-  - `gpio`
-  - `input_data`
+  - `gpio[7:0]`
+  - `direction_reg[7:0]`
+  - `output_reg[7:0]`
+  - `input_data[7:0]`
   - `read_valid`
+  - `done`
+  - `busy`
+  - `ready`
 - 推奨表示時間帯: `476 ns` から `500 ns`
 - 説明:
-  - `direction_reg=8'h0F`、`output_reg=8'h05` を設定し、外部入力として `8'hA0` を与えた。
-  - 波形より、GPIO状態読み出し時に `wb_rdata=8'hA5`、`input_data=8'hA5`、`read_valid=1` となることを確認した。
+  - `wb_cyc=1`、`wb_stb=0` とし、`wb_cyc` のみを有効にした無効バスアクセスを与えた。
+  - 波形より、`wb_ack=0`、`done=0`、`busy=0`、`ready=1` となることを確認した。
+  - また、`direction_reg` および `output_reg` が変化しないことを確認した。
 
 ![図6 `wb_cyc` のみ有効な無効アクセス](./images/case5.png)
+
+### 図7 CASE6 `wb_stb` のみ有効な無効アクセス
+- 対象ケース: CASE6
+- 推奨表示信号:
+  - `clk`
+  - `rst_n`
+  - `wb_cyc`
+  - `wb_stb`
+  - `wb_addr`
+  - `wb_we`
+  - `wb_wdata[7:0]`
+  - `wb_rdata[7:0]`
+  - `wb_ack`
+  - `gpio[7:0]`
+  - `direction_reg[7:0]`
+  - `output_reg[7:0]`
+  - `input_data[7:0]`
+  - `read_valid`
+  - `done`
+  - `busy`
+  - `ready`
+- 推奨表示時間帯: `496 ns` から `520 ns`
+- 説明:
+  - `wb_cyc=0`、`wb_stb=1` とし、`wb_stb` のみを有効にした無効バスアクセスを与えた。
+  - 波形より、`wb_ack=0`、`done=0`、`busy=0`、`ready=1` となることを確認した。
+  - また、`direction_reg` および `output_reg` が変化しないことを確認した。
+
+![図7 `wb_cyc` のみ有効な無効アクセス](./images/case6.png)
+
+### 図8 CASE7 `wb_cyc` のみ有効な無効アクセス
+- 対象ケース: CASE7
+- 推奨表示信号:
+  - `clk`
+  - `rst_n`
+  - `wb_cyc`
+  - `wb_stb`
+  - `wb_addr`
+  - `wb_we`
+  - `wb_wdata[7:0]`
+  - `wb_rdata[7:0]`
+  - `wb_ack`
+  - `gpio[7:0]`
+  - `direction_reg[7:0]`
+  - `output_reg[7:0]`
+  - `input_data[7:0]`
+  - `read_valid`
+  - `done`
+  - `busy`
+  - `ready`
+- 推奨表示時間帯: `516 ns` から `590 ns`
+- 説明:
+  - 事前に `direction_reg=8'hAA`、`output_reg=8'h55` を設定した後、バスアクセス中に `rst_n=0` を入力した。
+  - 波形より、リセット入力後に `direction_reg=8'h00`、`output_reg=8'h00`、`input_data=8'h00`、`wb_rdata=8'h00` へ初期化されることを確認した。
+  - また、`wb_ack=0`、`done=0`、`read_valid=0` となり、リセット解除後に `ready=1` となることを確認した。
+
+![図8 `wb_cyc` のみ有効な無効アクセス](./images/case7.png)

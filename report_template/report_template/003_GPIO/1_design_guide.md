@@ -180,11 +180,11 @@ GPIO は、外部回路と 0 または 1 のデジタル信号をやり取りす
 - `wb_wdata[7:0]`
 - `wb_rdata[7:0]`
 - `wb_ack`
-- `done`
+- `gpio[7:0]`
 - `direction_reg[7:0]`
 - `output_reg[7:0]`
-- `gpio[7:0]`
 - `input_data[7:0]`
 - `read_valid`
-- `ready`
+- `done`
 - `busy`
+- `ready`
