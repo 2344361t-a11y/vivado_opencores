@@ -172,34 +172,34 @@ Vivado 実行時のログを以下に示す。
 [506000] TB_PASS: invalid bus access must keep ready asserted
 [506000] TB_PASS: invalid bus access must not change direction_reg
 [506000] TB_PASS: invalid bus access must not change output_reg
-[516000] TB_PATH: CASE9 reset during operation start
-[516000] TB_PATH: CASE9 mid reset reset during operation start
-[520000] TB_CASE: CASE9 mid reset bus_write addr=0 data=aa cycle=49
+[516000] TB_PATH: CASE7 reset during operation start
+[516000] TB_PATH: CASE7 mid reset reset during operation start
+[520000] TB_CASE: CASE7 mid reset bus_write addr=0 data=aa cycle=49
 [525000] GPIO_CTRL PATH: write_direction addr=00 wb_wdata=aa direction=aa
 [526000] TB_PASS: WISHBONE write must assert done with ack
-[526000] TB_INFO: CASE9 mid reset write_ack wb_ack=1 ready=1 cycle=50
-[540000] TB_CASE: CASE9 mid reset bus_write addr=1 data=55 cycle=51
+[526000] TB_INFO: CASE7 mid reset write_ack wb_ack=1 ready=1 cycle=50
+[540000] TB_CASE: CASE7 mid reset bus_write addr=1 data=55 cycle=51
 [545000] GPIO_CTRL PATH: write_line addr=01 wb_wdata=55 output=55
 [546000] TB_PASS: WISHBONE write must assert done with ack
-[546000] TB_INFO: CASE9 mid reset write_ack wb_ack=1 ready=1 cycle=52
-[556000] TB_PASS: CASE9 pre-reset direction_reg must be AA
-[556000] TB_PASS: CASE9 pre-reset output_reg must be 55
-[560000] TB_CASE: CASE9 mid reset assert reset while bus access is active
+[546000] TB_INFO: CASE7 mid reset write_ack wb_ack=1 ready=1 cycle=52
+[556000] TB_PASS: CASE7 pre-reset direction_reg must be AA
+[556000] TB_PASS: CASE7 pre-reset output_reg must be 55
+[560000] TB_CASE: CASE7 mid reset assert reset while bus access is active
 [561000] GPIO_CTRL PATH: reset direction=00 output=00 wb_ack=0
-[562000] TB_PASS: CASE9 reset must clear direction_reg
-[562000] TB_PASS: CASE9 reset must clear output_reg
-[562000] TB_PASS: CASE9 reset must clear input_data
-[562000] TB_PASS: CASE9 reset must clear wb_rdata
-[562000] TB_PASS: CASE9 reset must clear wb_ack
-[562000] TB_PASS: CASE9 reset must clear done
-[562000] TB_PASS: CASE9 reset must clear read_valid
+[562000] TB_PASS: CASE7 reset must clear direction_reg
+[562000] TB_PASS: CASE7 reset must clear output_reg
+[562000] TB_PASS: CASE7 reset must clear input_data
+[562000] TB_PASS: CASE7 reset must clear wb_rdata
+[562000] TB_PASS: CASE7 reset must clear wb_ack
+[562000] TB_PASS: CASE7 reset must clear done
+[562000] TB_PASS: CASE7 reset must clear read_valid
 [565000] GPIO_CTRL PATH: reset direction=00 output=00 wb_ack=0
 [575000] GPIO_CTRL PATH: reset direction=00 output=00 wb_ack=0
-[586000] TB_PASS: CASE9 reset release must make ready 1
-[586000] TB_PASS: CASE9 reset release must keep wb_ack 0
-[586000] TB_PASS: CASE9 reset release must keep direction_reg 00
-[586000] TB_PASS: CASE9 reset release must keep output_reg 00
-[586000] TB_PASS: CASE9 reset release must keep input_data 00
+[586000] TB_PASS: CASE7 reset release must make ready 1
+[586000] TB_PASS: CASE7 reset release must keep wb_ack 0
+[586000] TB_PASS: CASE7 reset release must keep direction_reg 00
+[586000] TB_PASS: CASE7 reset release must keep output_reg 00
+[586000] TB_PASS: CASE7 reset release must keep input_data 00
 [586000] TB_SUMMARY: pass=69 fail=0
 ```
 

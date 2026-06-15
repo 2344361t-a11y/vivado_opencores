@@ -225,8 +225,8 @@ module tb_gpio_controller;
 
             bus_write(case_name, 1'b0, 8'hAA);
             bus_write(case_name, 1'b1, 8'h55);
-            check(direction_reg === 8'hAA, "CASE9 pre-reset direction_reg must be AA");
-            check(output_reg === 8'h55, "CASE9 pre-reset output_reg must be 55");
+            check(direction_reg === 8'hAA, "CASE7 pre-reset direction_reg must be AA");
+            check(output_reg === 8'h55, "CASE7 pre-reset output_reg must be 55");
 
             @(negedge clk);
             wb_addr = 1'b0;
@@ -239,13 +239,13 @@ module tb_gpio_controller;
             rst_n = 1'b0;
             #1;
 
-            check(direction_reg === 8'h00, "CASE9 reset must clear direction_reg");
-            check(output_reg === 8'h00, "CASE9 reset must clear output_reg");
-            check(input_data === 8'h00, "CASE9 reset must clear input_data");
-            check(wb_rdata === 8'h00, "CASE9 reset must clear wb_rdata");
-            check(wb_ack === 1'b0, "CASE9 reset must clear wb_ack");
-            check(done === 1'b0, "CASE9 reset must clear done");
-            check(read_valid === 1'b0, "CASE9 reset must clear read_valid");
+            check(direction_reg === 8'h00, "CASE7 reset must clear direction_reg");
+            check(output_reg === 8'h00, "CASE7 reset must clear output_reg");
+            check(input_data === 8'h00, "CASE7 reset must clear input_data");
+            check(wb_rdata === 8'h00, "CASE7 reset must clear wb_rdata");
+            check(wb_ack === 1'b0, "CASE7 reset must clear wb_ack");
+            check(done === 1'b0, "CASE7 reset must clear done");
+            check(read_valid === 1'b0, "CASE7 reset must clear read_valid");
 
             wb_cyc = 1'b0;
             wb_stb = 1'b0;
@@ -259,11 +259,11 @@ module tb_gpio_controller;
             rst_n = 1'b1;
             @(posedge clk); #1;
 
-            check(ready === 1'b1, "CASE9 reset release must make ready 1");
-            check(wb_ack === 1'b0, "CASE9 reset release must keep wb_ack 0");
-            check(direction_reg === 8'h00, "CASE9 reset release must keep direction_reg 00");
-            check(output_reg === 8'h00, "CASE9 reset release must keep output_reg 00");
-            check(input_data === 8'h00, "CASE9 reset release must keep input_data 00");
+            check(ready === 1'b1, "CASE7 reset release must make ready 1");
+            check(wb_ack === 1'b0, "CASE7 reset release must keep wb_ack 0");
+            check(direction_reg === 8'h00, "CASE7 reset release must keep direction_reg 00");
+            check(output_reg === 8'h00, "CASE7 reset release must keep output_reg 00");
+            check(input_data === 8'h00, "CASE7 reset release must keep input_data 00");
         end
     endtask
 
@@ -316,8 +316,8 @@ module tb_gpio_controller;
         $display("[%0t] TB_PATH: CASE6 wb_stb only invalid access start", $time);
         invalid_bus_access("CASE6 stb only", 1'b0, 1'b1, 1'b0, 1'b1, 8'h00);
 
-        $display("[%0t] TB_PATH: CASE9 reset during operation start", $time);
-        reset_during_operation("CASE9 mid reset");
+        $display("[%0t] TB_PATH: CASE7 reset during operation start", $time);
+        reset_during_operation("CASE7 mid reset");
 
         $display("[%0t] TB_SUMMARY: pass=%0d fail=%0d", $time, pass_count, fail_count);
         if (fail_count == 0) $display("Good.");
