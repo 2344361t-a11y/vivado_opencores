@@ -267,6 +267,7 @@ Vivado 実行時のログを以下に示す。
 
 ### CASE7 動作途中リセット
 | 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
 | リセット前方向設定 | `direction_reg=8'hAA` | `direction_reg=8'hAA` | `direction_reg=8'hAA` | 合格 |
 | リセット前出力設定 | `output_reg=8'h55` | `output_reg=8'h55` | `output_reg=8'h55` | 合格 |
 | 方向設定初期化 | `rst_n=0` | `direction_reg=8'h00` | `direction_reg=8'h00` | 合格 |
