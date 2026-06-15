@@ -226,7 +226,7 @@ Vivado 実行時のログを以下に示す。
 | 方向設定 | `direction_reg=8'hF0` | `direction_reg=8'hF0` | `direction_reg=8'hF0` | 合格 |
 | 出力値設定 | `output_reg=8'hC0` | `output_reg=8'hC0` | `output_reg=8'hC0` | 合格 |
 | GPIO状態読み出し | 外部入力 `8'h0A` | `wb_rdata=8'hCA` | `wb_rdata=8'hCA` | 合格 |
-| 読み出し値保持 | GPIO状態読み出し後 | `input_data=8'hCA5` | `input_data=8'hCA` | 合格 |
+| 読み出し値保持 | GPIO状態読み出し後 | `input_data=8'hCA` | `input_data=8'hCA` | 合格 |
 | 読み出し有効 | GPIO状態読み出し時 | `read_valid=1` | `read_valid=1` | 合格 |
 
 ### CASE3 全GPIO入力
@@ -242,7 +242,7 @@ Vivado 実行時のログを以下に示す。
 | 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
 | --- | --- | --- | --- | --- |
 | 方向設定 | `direction_reg=8'hFF` | `direction_reg=8'hFF` | `direction_reg=8'hFF` | 合格 |
-| 出力値設定 | `output_reg=8'h96` | `output_reg=8'h096` | `output_reg=8'h96` | 合格 |
+| 出力値設定 | `output_reg=8'h96` | `output_reg=8'h96` | `output_reg=8'h96` | 合格 |
 | GPIO状態読み出し | 全GPIO出力 | `wb_rdata=8'h96` | `wb_rdata=8'h96` | 合格 |
 | 読み出し値保持 | GPIO状態読み出し後 | `input_data=8'h96` | `input_data=8'h96` | 合格 |
 | 読み出し有効 | GPIO状態読み出し時 | `read_valid=1` | `read_valid=1` | 合格 |
@@ -474,9 +474,9 @@ Vivado 実行時のログを以下に示す。
   - 波形より、`wb_ack=0`、`done=0`、`busy=0`、`ready=1` となることを確認した。
   - また、`direction_reg` および `output_reg` が変化しないことを確認した。
 
-![図7 `wb_cyc` のみ有効な無効アクセス](./images/case6.png)
+![図7 `wb_stb` のみ有効な無効アクセス](./images/case6.png)
 
-### 図8 CASE7 `wb_cyc` のみ有効な無効アクセス
+### 図8 CASE7 動作途中リセット
 - 対象ケース: CASE7
 - 推奨表示信号:
   - `clk`
@@ -502,4 +502,4 @@ Vivado 実行時のログを以下に示す。
   - 波形より、リセット入力後に `direction_reg=8'h00`、`output_reg=8'h00`、`input_data=8'h00`、`wb_rdata=8'h00` へ初期化されることを確認した。
   - また、`wb_ack=0`、`done=0`、`read_valid=0` となり、リセット解除後に `ready=1` となることを確認した。
 
-![図8 `wb_cyc` のみ有効な無効アクセス](./images/case7.png)
+![図8 動作途中リセット](./images/case7.png)

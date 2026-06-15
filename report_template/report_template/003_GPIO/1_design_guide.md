@@ -7,17 +7,17 @@
 ## 回路概要
 本回路は、WISHBONE-style bus を介して GPIO の入出力方向、出力値、および入力値の読み出しを制御する 8 bit GPIO コントローラである。
 
-GPIO は、外部回路と 0 または 1 のデジタル信号をやり取りするための汎用入出力端子である。本回路では、gpio[7:0] の 8 本の GPIO ピンを使用する。
+GPIO は、外部回路と 0 または 1 のデジタル信号をやり取りするための汎用入出力端子である。本回路では、`gpio[7:0]` の 8 本の GPIO ピンを使用する。
 
 ## 実装する処理仕様の概要
-本回路では、wb_addr により操作対象を切り替える。
+本回路では、`wb_addr` により操作対象を切り替える。
 
-- wb_addr=0: GPIO の方向設定を扱う。
-- wb_addr=1: GPIO の出力値設定または GPIO 状態読み出しを扱う。
+- `wb_addr=0`: GPIO の方向設定を扱う。
+- `wb_addr=1`: GPIO の出力値設定または GPIO 状態読み出しを扱う。
 
-書き込み時は wb_we=1 とし、wb_wdata の値を内部レジスタへ書き込む。wb_addr=0 の場合は direction_reg に書き込み、wb_addr=1 の場合は output_reg に書き込む。
+書き込み時は `wb_we=1` とし、`wb_wdata` の値を内部レジスタへ書き込む。`wb_addr=0` の場合は `direction_reg` に書き込み、`wb_addr=1` の場合は `output_reg` に書き込む。
 
-読み出し時は wb_we=0 とし、wb_rdata から値を読み出す。wb_addr=0 の場合は direction_reg の値を読み出し、wb_addr=1 の場合は GPIO ピン状態を読み出す。
+読み出し時は `wb_we=0` とし、`wb_rdata` から値を読み出す。`wb_addr=0` の場合は `direction_reg` の値を読み出し、`wb_addr=1` の場合は GPIO ピン状態を読み出す。
 
 ## 構成図（ブロック図）
 ![GPIOコントローラとテストベンチの構成図](./images/gpio.svg)
@@ -52,9 +52,9 @@ GPIO は、外部回路と 0 または 1 のデジタル信号をやり取りす
 - `read_value[7:0]`: GPIO状態読み出し時に一時的に使用される値
 
 ### 内部信号
-- `bus_access`: wb_cyc & wb_stb。バスアクセスが有効であることを示す
-- `bus_accept`: bus_access & ~wb_ack。DUTがそのアクセスを受け付ける条件
-- `bus_write`: bus_accept & wb_we。書き込みアクセスを示す
+- `bus_access`: `wb_cyc` & `wb_stb`。バスアクセスが有効であることを示す
+- `bus_accept`: `bus_access` & ~`wb_ack`。DUTがそのアクセスを受け付ける条件
+- `bus_write`: `bus_accept` & `wb_we`。書き込みアクセスを示す
 
 ### 機能
 - `rst_n=0` のとき、リセット状態となる。
@@ -66,7 +66,7 @@ GPIO は、外部回路と 0 または 1 のデジタル信号をやり取りす
 - `wb_we=1` かつ `wb_addr=1` のとき、`wb_wdata` の値を `output_reg` に書き込む。
 - `wb_we=0` かつ `wb_addr=0` のとき、`direction_reg` の値を `wb_rdata` に出力する。
 - `wb_we=0` かつ `wb_addr=1` のとき、GPIO ピン状態を取り込んだ値を `wb_rdata` に出力する。
-- GPIO 状態読み出し時には、読み出し値を input_data に保持する。
+- GPIO 状態読み出し時には、読み出し値を `input_data` に保持する。
 - GPIO 状態読み出し時には、読み出し値が有効であることを示す `read_valid` を出力する。
 - `direction_reg[n]=1` の GPIO ピンでは、`output_reg[n]` の値を `gpio[n]` へ出力する。
 - `direction_reg[n]=0` の GPIO ピンでは、`gpio[n]` をハイインピーダンス状態とし、DUT 側からは駆動しない。
@@ -113,7 +113,7 @@ GPIO は、外部回路と 0 または 1 のデジタル信号をやり取りす
   - 有効な書き込みおよび読み出しアクセス時に `done=1` となることを確認する。
 - `CASE5` 、 `CASE6`
   - 無効バスアクセス時に `done=0` となることを確認する。
-- `CASE9`
+- `CASE7`
   - リセット入力時に `done=0` へ初期化されることを確認する。
 
 #### `read_valid` のGPIO状態読み出し確認
@@ -125,7 +125,7 @@ GPIO は、外部回路と 0 または 1 のデジタル信号をやり取りす
 - `CASE1` から `CASE4`
   - GPIO状態読み出し時に `read_valid=1` となることを確認する。
   - `wb_rdata` および `input_data` が期待値と一致することを確認する。
-- `CASE9`
+- `CASE7`
   - リセット入力時に `read_valid=0` へ初期化されることを確認する。
 
 #### `busy` のバス処理中確認
