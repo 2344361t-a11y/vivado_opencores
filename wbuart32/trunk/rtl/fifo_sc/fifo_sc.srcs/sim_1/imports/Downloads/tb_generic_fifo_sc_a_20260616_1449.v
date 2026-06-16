@@ -1,11 +1,12 @@
 `timescale 1ns / 100ps
 
-// Testbench for OpenCores generic_fifo_sc_a
+// Revised testbench for OpenCores generic_fifo_sc_a
 // Target DUT : generic_fifo_sc_a.v
 // Parameters : default values dw=8, aw=8, n=32
 // Purpose    : verify reset, FIFO order, full/guard-bit behavior, and clr behavior
+// Revision   : expanded log message width to avoid truncated TB_PASS/TB_FAIL strings
 
-module tb_generic_fifo_sc_a_20260616_1426;
+module tb_generic_fifo_sc_a_20260616_1449;
 
     parameter DW = 8;
     parameter AW = 8;
@@ -62,7 +63,7 @@ module tb_generic_fifo_sc_a_20260616_1426;
     end
 
     task tb_pass;
-        input [255:0] msg;
+        input [1023:0] msg;
         begin
             pass_count = pass_count + 1;
             $display("[%0t] TB_PASS: %0s", $time, msg);
@@ -70,7 +71,7 @@ module tb_generic_fifo_sc_a_20260616_1426;
     endtask
 
     task tb_fail;
-        input [255:0] msg;
+        input [1023:0] msg;
         begin
             fail_count = fail_count + 1;
             $display("[%0t] TB_FAIL: %0s", $time, msg);
@@ -79,7 +80,7 @@ module tb_generic_fifo_sc_a_20260616_1426;
 
     task check_bit;
         input condition;
-        input [255:0] msg;
+        input [1023:0] msg;
         begin
             if (condition) tb_pass(msg);
             else           tb_fail(msg);
@@ -89,7 +90,7 @@ module tb_generic_fifo_sc_a_20260616_1426;
     task check_eq8;
         input [DW-1:0] actual;
         input [DW-1:0] expected;
-        input [255:0] msg;
+        input [1023:0] msg;
         begin
             if (actual === expected) begin
                 pass_count = pass_count + 1;
@@ -106,7 +107,7 @@ module tb_generic_fifo_sc_a_20260616_1426;
     task check_eq_int;
         input [31:0] actual;
         input [31:0] expected;
-        input [255:0] msg;
+        input [1023:0] msg;
         begin
             if (actual === expected) begin
                 pass_count = pass_count + 1;
@@ -121,7 +122,7 @@ module tb_generic_fifo_sc_a_20260616_1426;
     endtask
 
     task log_state;
-        input [255:0] tag;
+        input [1023:0] tag;
         begin
             $display("[%0t] TB_INFO: %0s din=0x%02h dout=0x%02h we=%0b re=%0b full=%0b empty=%0b wp=0x%02h rp=0x%02h gb=%0b cnt=%0d level=%0b",
                      $time, tag, din, dout, we, re, full, empty,
@@ -151,7 +152,7 @@ module tb_generic_fifo_sc_a_20260616_1426;
 
     task write_one;
         input [DW-1:0] data;
-        input [255:0] tag;
+        input [1023:0] tag;
         begin
             if (full) begin
                 tb_fail("write request blocked because FIFO is full before write_one");
@@ -172,7 +173,7 @@ module tb_generic_fifo_sc_a_20260616_1426;
 
     task read_one_check;
         input [DW-1:0] expected;
-        input [255:0] tag;
+        input [1023:0] tag;
         begin
             if (empty) begin
                 tb_fail("read request blocked because FIFO is empty before read_one_check");
@@ -191,7 +192,7 @@ module tb_generic_fifo_sc_a_20260616_1426;
     endtask
 
     task pulse_clr;
-        input [255:0] tag;
+        input [1023:0] tag;
         begin
             @(negedge clk);
             clr = 1'b1;
@@ -211,7 +212,7 @@ module tb_generic_fifo_sc_a_20260616_1426;
     endtask
 
     task check_empty_state;
-        input [255:0] tag;
+        input [1023:0] tag;
         begin
             check_bit(empty === 1'b1, {tag, " empty must be 1"});
             check_bit(full  === 1'b0, {tag, " full must be 0"});
