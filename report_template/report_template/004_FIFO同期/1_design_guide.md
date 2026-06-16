@@ -1,8 +1,7 @@
-# RS-232回路およびテストベンチ説明書
+# FFIO同期回路およびテストベンチ説明書
 
 ## 対象ファイル
-- `uart_tx.v`: UART送信回路
-- `uart_rx.v`: UART受信回路
+- `uart_tx.v`: FIFO同期回路
 - `tb_uart_loopback.v`: 検証用テストベンチ
 
 ## 回路概要
@@ -39,19 +38,33 @@
 ### 入力信号
 - `clk`: システムクロック
 - `rst`: 非同期リセット
-- `start`: 送信開始要求パルス
-- `data[7:0]`: 送信データ
+- `clr`: リセット
+- `din`: 
+- `we`: 
+- `re`:
 
 ### 出力信号
-- `tx`: シリアル送信線
-- `busy`: 送信中フラグ
+- `dout`: 
+- `full`:
+- `full_r`: 
+- `empty`: 
+- `empty_r`:
+- `full_n`: 
+- `full_n_r`: 
+- `empty_n`: 
+- `empty_n_r`: 
+- `level`: 
 
 ### 内部レジスタ
-- `state`: 送信状態を管理するステートマシン
-- `clk_count`: UART 1bit 期間内のクロック数を数えるカウンタ
-- `bit_index`: 現在送信中のデータビット位置
-- `data_reg`: 送信データを保持するレジスタ
-- `parity_bit`: 送信用に計算したパリティビット
+- `wp`: 
+- `rp`: 
+- `full_r`: 
+- `empty_r`: 
+- `gb`: 
+- `gb2`: 
+- `cnt`: 
+- `full_n_r`: 
+- `empty_n_r`: 
 
 ### 機能
 - `STATE_IDLE` で待機する
