@@ -55,7 +55,7 @@ FIFOの基本動作は以下の通りである。
 ![FIFO同期回路構成図](./images/fifo_sc.svg)
 
 ## 回路図
-![FIFO同期回路図](./images/fifo_sc_module.pmg)
+![FIFO同期回路図](./images/fifo_sc_module.png)
 
 ## `generic_fifo_sc_a.v`
 ### 入力信号
