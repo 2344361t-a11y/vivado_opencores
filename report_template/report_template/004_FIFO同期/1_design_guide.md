@@ -54,7 +54,7 @@ FIFOの基本動作は以下の通りである。
 ## 構成図（ブロック図）
 ![FIFO同期回路図](./fifo_sc.png)
 
-## `uart_tx.v`
+## `generic_fifo_sc_a.v`
 ### 入力信号
 - `clk`: FIFOの書き込み・読み出しに共通して使用するクロック信号
 - `rst`: Low active のリセット信号
