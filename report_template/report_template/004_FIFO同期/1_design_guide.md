@@ -8,7 +8,7 @@
 
 ## 回路概要
 
-本回路は、OpenCores の `generic_fifos` に含まれる FIFO同期回路である。FIFO は First-In First-Out の略であり、先に書き込んだデータを先に読み出すためのバッファ回路である。
+本回路は、OpenCores の `generic_fifos` に含まれる FIFO同期回路である。FIFO は First-In First-Out の略であり、先に書き込んだデータを先に読み出すためのバッファ回路である。実際の機器では、CPUと周辺機器の間、UARTやSPIなどの通信回路の送受信バッファなどに使われる。
 
 今回対象とする `generic_fifo_sc_a.v` は、書き込みと読み出しを同一クロック `clk` に同期して行う single clock FIFO である。外部から `din` に入力されたデータは、`we` が有効なクロックで FIFO 内部のメモリへ書き込まれる。また、`re` が有効なクロックで、FIFO に保存されているデータが書き込み順に `dout` へ読み出される。
 
@@ -56,159 +56,89 @@ FIFOの基本動作は以下の通りである。
 
 ## `uart_tx.v`
 ### 入力信号
-- `clk`: システムクロック
-- `rst`: 非同期リセット
-- `clr`: リセット
-- `din`: 
-- `we`: 
-- `re`:
+- `clk`: FIFOの書き込み・読み出しに共通して使用するクロック信号
+- `rst`: Low active のリセット信号
+- `clr`: FIFO状態を初期化する同期クリア信号
+- `din`: FIFOへ書き込むデータ
+- `we`: 書き込み要求信号
+- `re`: 読み出し要求信号
 
 ### 出力信号
-- `dout`: 
-- `full`:
-- `full_r`: 
-- `empty`: 
-- `empty_r`:
-- `full_n`: 
-- `full_n_r`: 
-- `empty_n`: 
-- `empty_n_r`: 
-- `level`: 
+- `dout`: FIFOから読み出されるデータ
+- `full`: FIFOが満杯であることを示す組み合わせ出力
+- `full_r`: レジスタ出力版の `full`
+- `empty`: FIFOが空であることを示す組み合わせ出力
+- `empty_r`: レジスタ出力版の `empty`
+- `full_n`: FIFOの空き容量がしきい値以下であることを示す組み合わせ出力
+- `full_n_r`: レジスタ出力版の `full_n`
+- `empty_n`: FIFO内のデータ数がしきい値未満であることを示す組み合わせ出力
+- `empty_n_r`: レジスタ出力版の `empty_n`
+- `level`: FIFOの使用量を大まかに示す信号
 
 ### 内部レジスタ
-- `wp`: 
-- `rp`: 
-- `full_r`: 
-- `empty_r`: 
-- `gb`: 
-- `gb2`: 
-- `cnt`: 
-- `full_n_r`: 
-- `empty_n_r`: 
+- `wp`: write pointer。次にデータを書き込むアドレスを示す
+- `rp`: read pointer。次にデータを読み出すアドレスを示す
+- `wp_p11`: `wp + 1` を表す信号
+- `wp_p12`: `wp + 2` を表す信号
+- `rp_p11`: `rp + 1` を表す信号
+- `gb`: guard bit。`wp==rp` のときに `full` と `empty` を区別する
+- `gb2`: レジスタ出力版ステータスの制御に使用される guard bit
+- `cnt`: FIFO内に保持されているデータ要素数
 
 ### 機能
-- `STATE_IDLE` で待機する
-- `start` 入力時に `data` をラッチし、パリティを計算する
-- start bit を送信する
-- データ 8bit を LSB first で送信する
-- パリティ有効時は parity bit を送信する
-- stop bit を送信して待機状態へ戻る
+- `generic_fifo_sc_a.v` は、同一クロックで書き込みと読み出しを行う同期FIFOである。
 
-### シミュレーションログ出力
-- リセットから待機状態への遷移
-- 送信開始受付
-- 各データ bit の送信
-- パリティ bit の送信
-- フレーム送信完了
+- 書き込み時には、`we=1` のクロックで `din` の値が内部RAMに保存される。このとき、書き込み先アドレスは `wp` により指定され、書き込み後に `wp` が1つ進む。
 
-## `uart_rx.v`
-### 入力信号
-- `clk`: システムクロック
-- `rst`: 非同期リセット
-- `rx`: シリアル受信線
-- `data_read`: 受信済みデータの読出し完了通知
+- 読み出し時には、`re=1` のクロックで `rp` が示すアドレスのデータが `dout` に読み出される。読み出し後に `rp` が1つ進む。
 
-### 出力信号
-- `data_out[7:0]`: 受信データ
-- `done`: 正常受信完了時に 1 クロックだけ立つ信号
-- `busy`: 受信中フラグ
-- `framing_error`: stop bit が不正な場合に立つ信号
-- `parity_error`: parity bit が不正な場合に立つ信号
-- `overrun_error`: 未読データが残ったまま次の正常フレームを受信した場合に立つ信号
-- `data_valid`: `data_out` に未読の有効データが格納されていることを示す信号
-
-### 内部レジスタ
-- `state`: 受信状態を管理するステートマシン
-- `clk_count`: UART 1bit 期間内のクロック数を数えるカウンタ
-- `bit_index`: 現在受信中のデータビット位置
-- `parity_calc`: 受信データから計算したパリティ値
-
-### 機能
-- start bit の Low を検出する
-- start bit 中央で再確認し、誤検出を防ぐ
-- データ 8bit を LSB first で受信する
-- parity bit を検査する
-- stop bit を検査する
-- 正常フレームなら `done` を立てる
-- 未読データがある状態で次の正常フレームを受信した場合、`overrun_error` を立てる
-
-### エラー動作
-- `parity_error=1`: parity bit が期待値と一致しない
-- `framing_error=1`: stop bit が `1` ではない
-- `overrun_error=1`: `data_valid=1` のまま次の正常フレームを受信した
+- FIFO内のデータ数は `cnt` により管理される。書き込みのみが行われた場合は `cnt` が増加し、読み出しのみが行われた場合は `cnt` が減少する。書き込みと読み出しが同時に行われた場合は、FIFO内のデータ数は変化しない。
 
 ### 主要ステータス信号とテスト内容
-#### `data_valid` のセットおよびクリア
-意味:
-- `uart_rx` が正常に 1 フレーム受信し、`data_out` に有効なデータが入っていることを示す。
-- `data_valid=1` は、まだ読み出されていない受信データが存在することを意味する。
-- `data_read` を入力すると `data_valid=0` にクリアされる。
+#### `full` と `empty` の判定
 
-テスト内容:
-- `CASE1`
-  - 正常受信後に `data_valid=1` になることを確認する。
-  - `pulse_data_read()` 後に `data_valid=0` になることを確認する。
-- `CASE4`
-  - 1 回目受信後に `data_valid=1` となることを確認する。
-  - 2 回目受信後も未読のため `data_valid=1` のままであることを確認する。
-  - `pulse_data_read()` 後にクリアされることを確認する。
+FIFOでは、`wp` と `rp` が同じ値になる状態が2種類存在する。
 
-#### `parity_error` の検出
-意味:
-- parity bit が、受信したデータから計算した期待値と一致しないときに立つエラー信号である。
-- 今回は even parity を採用しているため、データ中の `1` の個数が偶数になることを前提に検査する。
-- 通信中のビット化けを簡易的に検出する目的で使用する。
+- FIFOが空の状態
+- FIFOが満杯の状態
 
-テスト内容:
-- `CASE2`
-  - `inject_frame(8'h55, 1'b1, 1'b1)` により、意図的に誤った parity bit を注入する。
-  - その結果 `parity_error=1` となることを確認する。
-  - あわせて `rx_done=0`、`data_valid=0` であり、正常受信扱いしないことを確認する。
+そのため、`wp==rp` だけでは、FIFOが空なのか満杯なのかを判断できない。  
+本回路では、この区別のために `gb` を使用する。
 
-#### `framing_error` の検出
-意味:
-- stop bit が本来 `1` で終わるべきところ、そうなっていない場合に立つエラー信号である。
-- フレーム終端が正しく形成されていないことを示す。
-- 通信区切りの異常や波形異常を検出する目的で使用する。
+- wp == rp かつ gb == 0 → empty
+- wp == rp かつ gb == 1 → full
 
-テスト内容:
-- `CASE3`
-  - `inject_frame(8'h33, 1'b0, 1'b0)` により、stop bit を意図的に `0` にする。
-  - その結果 `framing_error=1` となることを確認する。
-  - あわせて `rx_done=0`、`data_valid=0` であり、正常受信扱いしないことを確認する。
+## generic_dpram.v
+### 役割
+generic_dpram.v は、FIFO内部でデータを保存するために使用されるデュアルポートRAMである。
 
-#### `overrun_error` の検出
-意味:
-- 前に受信したデータをまだ読み出していない状態で、新しい正常フレームを受信した場合に立つエラー信号である。
-- 受信自体は成立しているが、前のデータを取りこぼした可能性があることを示す。
+generic_fifo_sc_a.v は、FIFO全体の状態管理を行う回路であり、実際のデータ保存には generic_dpram.v を使用している。FIFO本体では、書き込みポインタ wp をRAMの書き込みアドレスとして使用し、読み出しポインタ rp をRAMの読み出しアドレスとして使用する。
 
-テスト内容:
-- `CASE4`
-  - まず `8'hA5` を正常受信し、`data_valid=1` とする。
-  - `data_read` を行わないまま、続けて `8'h3C` を受信させる。
-  - このとき `overrun_error=1` になることを確認する。
-  - 最後に `pulse_data_read()` を入力し、`overrun_error=0` に戻ることを確認する。
+したがって、generic_dpram.v は、FIFOにおけるデータ格納部に相当する。
+
 
 ## `tb_uart_loopback.v`
 ### 目的
-- 案件で要求される主要機能を一通り検証する
-- 実行パスをシミュレーションログに残す
-- 回路の入出力値をシミュレーションログに残す
+- 
 
 ### テストケース
-- `CASE1`: 正常な loopback 送受信
-- `CASE2`: パリティエラーの強制注入
-- `CASE3`: フレーミングエラーの強制注入
-- `CASE4`: 未読データを残したまま2フレーム受信し、オーバーランを確認
+- `RESET`: リセット後の初期状態確認
+- `CASE1`: 基本FIFO動作確認
+- `CASE2`: full,guard bit, emptyの復帰確認
+- `CASE3`: clrによるクリア確認
 
 ### Vivado Wave で観測すべき主な信号
-- `tx_line`
-- `rx_line`
-- `tx_busy`
-- `rx_busy`
-- `rx_data`
-- `rx_done`
-- `rx_data_valid`
-- `rx_parity_error`
-- `rx_framing_error`
-- `rx_overrun_error`
+- `clk`
+- `rst`
+- `clr`
+- `din`
+- `we`
+- `dout`
+- `re`
+- `full`
+- `empty`
+- `wp`
+- `rp`
+- `gb`
+- `cnt`
+- `level`
