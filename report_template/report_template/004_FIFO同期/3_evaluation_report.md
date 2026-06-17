@@ -1,4 +1,4 @@
-# FIFO同期 評価報告書
+# FIFO同期回路 評価報告書
 
 ## 評価対象
 - 対象回路:
@@ -67,18 +67,117 @@ Vivado 実行時のログを以下に示す。
 
 ## 波形キャプチャ貼付欄
 
-### 図1 正常送受信波形
+### 図1 RESET確認波形
+- 対象ケース: RESET
+- 推奨表示信号:
+  - `clk`
+  - `rst`
+  - `clr`
+  - `din`
+  - `we`
+  - `dout`
+  - `re`
+  - `full`
+  - `empty`
+  - `level`
+  - `wp`
+  - `rp`
+  - `gb`
+  - `cnt`
+- 推奨表示時間帯: `0 ns` から `70 ns`
+- 説明:
+  - 正常な送受信により `rx_data=0x28`、`rx_done=1` となることを確認した。
+
+![図1 RESET確認波形](./images/reset.png)
+
+### 図2 正常確認波形
 - 対象ケース: CASE1
 - 推奨表示信号:
-  - `tx_line`
-  - `rx_line`
-  - `rx_data`
-  - `rx_done`
-  - `rx_data_valid`
-  - `rx_parity_error`
-  - `rx_framing_error`
-- 推奨表示時間帯: `1.0 us` から `1.2 us`
+  - `clk`
+  - `rst`
+  - `clr`
+  - `din`
+  - `we`
+  - `dout`
+  - `re`
+  - `full`
+  - `empty`
+  - `level`
+  - `wp`
+  - `rp`
+  - `gb`
+  - `cnt`
+- 推奨表示時間帯: `50 ns` から `220 ns`
 - 説明:
-  - 正常な送受信により `rx_data=0x28`、`rx_done=1`、`rx_parity_error=0`、`rx_framing_error=0` となることを確認した。
+  - 正常な送受信により `rx_data=0x28`、`rx_done=1` となることを確認した。
 
-![図1 正常送受信波形](./images/case1.png)
+![図2 正常確認波形](./images/case1.png)
+
+### 図3 CASE2 full確認波形
+- 対象ケース: CASE2
+- 推奨表示信号:
+  - `clk`
+  - `rst`
+  - `clr`
+  - `din`
+  - `we`
+  - `dout`
+  - `re`
+  - `full`
+  - `empty`
+  - `level`
+  - `wp`
+  - `rp`
+  - `gb`
+  - `cnt`
+- 推奨表示時間帯: `2700 ns` から `2820 ns`
+- 説明:
+  - 正常な送受信により `rx_data=0x28`、`rx_done=1` となることを確認した。
+
+![図3 CASE2 full確認波形](./images/case2_full.png)
+
+### 図4 RESET確認波形
+- 対象ケース: CASE2
+- 推奨表示信号:
+  - `clk`
+  - `rst`
+  - `clr`
+  - `din`
+  - `we`
+  - `dout`
+  - `re`
+  - `full`
+  - `empty`
+  - `level`
+  - `wp`
+  - `rp`
+  - `gb`
+  - `cnt`
+- 推奨表示時間帯: `5280 ns` から `5370 ns`
+- 説明:
+  - 正常な送受信により `rx_data=0x28`、`rx_done=1` となることを確認した。
+
+![図1 CASE2 empty確認波形](./images/case2_empty.png)
+
+### 図5 CLR確認波形
+- 対象ケース: CASE3
+- 推奨表示信号:
+  - `clk`
+  - `rst`
+  - `clr`
+  - `din`
+  - `we`
+  - `dout`
+  - `re`
+  - `full`
+  - `empty`
+  - `level`
+  - `wp`
+  - `rp`
+  - `gb`
+  - `cnt`
+- 推奨表示時間帯: `5350 ns` から `5450 ns`
+- 説明:
+  - 正常な送受信により `rx_data=0x28`、`rx_done=1` となることを確認した。
+
+![図1 CLR確認波形](./images/case3.png)
