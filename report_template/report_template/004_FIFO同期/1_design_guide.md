@@ -52,7 +52,10 @@ FIFOの基本動作は以下の通りである。
 
 したがって、本回路の検証では、データが書き込み順に読み出されることに加えて、`gb` により full と empty が正しく区別されることを確認する。
 ## 構成図（ブロック図）
-![FIFO同期回路図](./images/fifo_sc.svg)
+![FIFO同期回路構成図](./images/fifo_sc.svg)
+
+## 回路図
+![FIFO同期回路図](./images/fifo_sc_module.pmg)
 
 ## `generic_fifo_sc_a.v`
 ### 入力信号
