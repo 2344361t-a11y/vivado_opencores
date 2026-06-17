@@ -22,6 +22,9 @@ GPIO は、外部回路と 0 または 1 のデジタル信号をやり取りす
 ## 構成図（ブロック図）
 ![GPIOコントローラとテストベンチの構成図](./images/gpio.svg)
 
+## 回路図
+![GPIOコントローラの回路図](./images/gpio_module.png)
+
 ## `gpio_controller.v`
 ### 入力信号
 - `clk`: クロック信号
