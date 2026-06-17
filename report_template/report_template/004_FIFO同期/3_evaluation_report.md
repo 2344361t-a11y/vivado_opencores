@@ -3,13 +3,14 @@
 ## 評価対象
 - 対象回路:
   - `generic_fifo_sc_a.v`
+- 補助回路:
   - `generic_dpram.v`
   - `timescale.v`
 - テストベンチ:
   - `tb_generic_fifo_sc_a_20260616_1449.v`
 
 ## 評価目的
-- 選定した RS-232/UART 回路が、期待値表どおりに動作することを確認する。
+- FIFO同期回路が、期待値表どおりに動作することを確認する。
 - シミュレーションログから、以下の両方が判別できることを確認する。
   - 回路の入出力値
   - 回路本体およびテストベンチの実行パス
@@ -29,33 +30,154 @@
 3. Behavioral Simulation を実行する。
 4. Console ログを保存する。
 5. 以下の信号を含む波形を保存する。
-   - `tx_line`
-   - `rx_line`
-   - `rx_data`
-   - `rx_done`
-   - `rx_data_valid`
-   - `rx_parity_error`
-   - `rx_framing_error`
-   - `rx_overrun_error`
-
+   - `clk`
+   - `rst`
+   - `clr`
+   - `din`
+   - `we`
+   - `dout`
+   - `re`
+   - `full`
+   - `empty`
+   - `level`
+   - `wp`
+   - `rp`
+   - `gb`
+   - `cnt`
 
 ## シミュレーションログ
 Vivado 実行時のログを以下に示す。
 
 ```text
-
+[0] TB_PATH: simulation start
+[0] TB_INFO: DUT=generic_fifo_sc_a dw=8 aw=8 n=32 depth=256
+[0] TB_PATH: reset sequence start
+[37000] TB_INFO: during reset din=0x00 dout=0xxx we=0 re=0 full=0 empty=1 wp=0x00 rp=0x00 gb=0 cnt=0 level=0
+[57000] TB_PATH: reset released
+[57000] TB_INFO: after reset din=0x00 dout=0xxx we=0 re=0 full=0 empty=1 wp=0x00 rp=0x00 gb=0 cnt=0 level=0
+[57000] TB_PASS: RESET empty must be 1
+[57000] TB_PASS: RESET full must be 0
+[57000] TB_PASS: RESET wp must equal rp
+[57000] TB_PASS: RESET gb must be 0
+[57000] TB_PASS: RESET cnt must be 0 actual=0 expected=0
+[57000] TB_PATH: CASE1 basic FIFO operation start
+[57000] TB_INFO: CASE1 write sequence = 00, FF, A5, 5A
+[60000] TB_CASE: CASE1 write data=0x00
+[67000] TB_INFO: after write_one din=0x00 dout=0xxx we=1 re=0 full=0 empty=0 wp=0x01 rp=0x00 gb=0 cnt=1 level=0
+[80000] TB_CASE: CASE1 write data=0xff
+[87000] TB_INFO: after write_one din=0xff dout=0x00 we=1 re=0 full=0 empty=0 wp=0x02 rp=0x00 gb=0 cnt=2 level=0
+[100000] TB_CASE: CASE1 write data=0xa5
+[107000] TB_INFO: after write_one din=0xa5 dout=0x00 we=1 re=0 full=0 empty=0 wp=0x03 rp=0x00 gb=0 cnt=3 level=0
+[120000] TB_CASE: CASE1 write data=0x5a
+[127000] TB_INFO: after write_one din=0x5a dout=0x00 we=1 re=0 full=0 empty=0 wp=0x04 rp=0x00 gb=0 cnt=4 level=0
+[130000] TB_PASS: CASE1 empty must be 0 after four writes
+[130000] TB_PASS: CASE1 full must be 0 after four writes
+[130000] TB_PASS: CASE1 cnt must be 4 after four writes actual=4 expected=4
+[140000] TB_CASE: CASE1 read order check read expected=0x00
+[148000] TB_PASS: CASE1 read order check actual=0x00 expected=0x00
+[148000] TB_INFO: after read_one_check din=0x00 dout=0x00 we=0 re=1 full=0 empty=0 wp=0x04 rp=0x01 gb=0 cnt=3 level=0
+[160000] TB_CASE: CASE1 read order check read expected=0xff
+[168000] TB_PASS: CASE1 read order check actual=0xff expected=0xff
+[168000] TB_INFO: after read_one_check din=0x00 dout=0xff we=0 re=1 full=0 empty=0 wp=0x04 rp=0x02 gb=0 cnt=2 level=0
+[180000] TB_CASE: CASE1 read order check read expected=0xa5
+[188000] TB_PASS: CASE1 read order check actual=0xa5 expected=0xa5
+[188000] TB_INFO: after read_one_check din=0x00 dout=0xa5 we=0 re=1 full=0 empty=0 wp=0x04 rp=0x03 gb=0 cnt=1 level=0
+[200000] TB_CASE: CASE1 read order check read expected=0x5a
+[208000] TB_PASS: CASE1 read order check actual=0x5a expected=0x5a
+[208000] TB_INFO: after read_one_check din=0x00 dout=0x5a we=0 re=1 full=0 empty=1 wp=0x04 rp=0x04 gb=0 cnt=0 level=0
+[210000] TB_PASS: CASE1 after all reads empty must be 1
+[210000] TB_PASS: CASE1 after all reads full must be 0
+[210000] TB_PASS: CASE1 after all reads wp must equal rp
+[210000] TB_PASS: CASE1 after all reads gb must be 0
+[210000] TB_PASS: CASE1 after all reads cnt must be 0 actual=0 expected=0
+[210000] TB_PATH: CASE2 full guard empty return start
+[210000] TB_INFO: CASE2 write din=i[7:0] for i=0..255
+[220000] TB_CASE: CASE2 write index=0 data=0x00
+[230000] TB_CASE: CASE2 write index=1 data=0x01
+[240000] TB_CASE: CASE2 write index=2 data=0x02
+[250000] TB_CASE: CASE2 write index=3 data=0x03
+[2740000] TB_CASE: CASE2 write index=252 data=0xfc
+[2750000] TB_CASE: CASE2 write index=253 data=0xfd
+[2760000] TB_CASE: CASE2 write index=254 data=0xfe
+[2770000] TB_CASE: CASE2 write index=255 data=0xff
+[2787000] TB_INFO: CASE2 after 256 writes din=0x00 dout=0x00 we=0 re=0 full=1 empty=0 wp=0x04 rp=0x04 gb=1 cnt=256 level=11
+[2787000] TB_PASS: CASE2 full must be 1 after 256 writes
+[2787000] TB_PASS: CASE2 empty must be 0 after 256 writes
+[2787000] TB_PASS: CASE2 cnt must be 256 after 256 writes actual=256 expected=256
+[2787000] TB_PASS: CASE2 full state wp must equal rp
+[2787000] TB_PASS: CASE2 full state gb must be 1
+[2790000] TB_CASE: CASE2 read index=0 expected=0x00
+[2800000] TB_CASE: CASE2 read index=1 expected=0x01
+[2810000] TB_CASE: CASE2 read index=2 expected=0x02
+[2820000] TB_CASE: CASE2 read index=3 expected=0x03
+[5310000] TB_CASE: CASE2 read index=252 expected=0xfc
+[5320000] TB_CASE: CASE2 read index=253 expected=0xfd
+[5330000] TB_CASE: CASE2 read index=254 expected=0xfe
+[5340000] TB_CASE: CASE2 read index=255 expected=0xff
+[5357000] TB_INFO: CASE2 after 256 reads din=0x00 dout=0x00 we=0 re=0 full=0 empty=1 wp=0x04 rp=0x04 gb=0 cnt=0 level=0
+[5357000] TB_PASS: CASE2 all 256 read values must match write order
+[5357000] TB_PASS: CASE2 after all reads empty must be 1
+[5357000] TB_PASS: CASE2 after all reads full must be 0
+[5357000] TB_PASS: CASE2 after all reads wp must equal rp
+[5357000] TB_PASS: CASE2 after all reads gb must be 0
+[5357000] TB_PASS: CASE2 after all reads cnt must be 0 actual=0 expected=0
+[5357000] TB_PATH: CASE3 clr behavior start
+[5360000] TB_CASE: CASE3 pre-clear write data=0x11
+[5367000] TB_INFO: after write_one din=0x11 dout=0x00 we=1 re=0 full=0 empty=0 wp=0x05 rp=0x04 gb=0 cnt=1 level=0
+[5380000] TB_CASE: CASE3 pre-clear write data=0x22
+[5387000] TB_INFO: after write_one din=0x22 dout=0x11 we=1 re=0 full=0 empty=0 wp=0x06 rp=0x04 gb=0 cnt=2 level=0
+[5400000] TB_CASE: CASE3 pre-clear write data=0x33
+[5407000] TB_INFO: after write_one din=0x33 dout=0x11 we=1 re=0 full=0 empty=0 wp=0x07 rp=0x04 gb=0 cnt=3 level=0
+[5410000] TB_PASS: CASE3 empty must be 0 before clr
+[5410000] TB_PASS: CASE3 cnt must be 3 before clr actual=3 expected=3
+[5420000] TB_CASE: CASE3 clr=1
+[5427000] TB_INFO: after clr active edge din=0x00 dout=0x11 we=0 re=0 full=0 empty=1 wp=0x00 rp=0x00 gb=0 cnt=0 level=0
+[5437000] TB_INFO: after clr released din=0x00 dout=0xfc we=0 re=0 full=0 empty=1 wp=0x00 rp=0x00 gb=0 cnt=0 level=0
+[5437000] TB_PASS: CASE3 after clr empty must be 1
+[5437000] TB_PASS: CASE3 after clr full must be 0
+[5437000] TB_PASS: CASE3 after clr wp must equal rp
+[5437000] TB_PASS: CASE3 after clr gb must be 0
+[5437000] TB_PASS: CASE3 after clr cnt must be 0 actual=0 expected=0
+[5437000] TB_SUMMARY: pass=35 fail=0
+[5437000] TB_PATH: simulation finished with PASS
 ```
 
 ## 評価結果まとめ
+### RESET 正常送受信
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+| empty | リセット後 | `1` | `1` | 合格 |
+| full | リセット後 | `1` | `1` | 合格 |
+| wp と rp | リセット後 | `1` | `1` | 合格 |
+| gb | リセット後 | `1` | `1` | 合格 |
+| cnt | リセット後 | `1` | `1` | 合格 |
+
 ### CASE1 正常送受信
 | 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
 | --- | --- | --- | --- | --- |
-| 送受信 | `pulse_start(8'h28)` | `rx_data=8'h28` | `rx_data=8'h28` | 合格 |
-| 受信完了 | `pulse_start(8'h28)` | `rx_done=1` | `rx_done=1` | 合格 |
-| 有効データ保持 | 正常受信後 | `rx_data_valid=1` | `rx_data_valid=1` | 合格 |
-| パリティ異常なし | 正常受信後 | `rx_parity_error=0` | `rx_parity_error=0` | 合格 |
-| フレーミング異常なし | 正常受信後 | `rx_framing_error=0` | `rx_framing_error=0` | 合格 |
-| 読出し後クリア | `pulse_data_read()` 後 | `rx_data_valid=0` | `rx_data_valid=0` | 合格 |
+| empty | リセット後 | `1` | `1` | 合格 |
+| full | リセット後 | `1` | `1` | 合格 |
+| wp と rp | リセット後 | `1` | `1` | 合格 |
+| gb | リセット後 | `1` | `1` | 合格 |
+| cnt | リセット後 | `1` | `1` | 合格 |
+
+### CASE2 正常送受信
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+| empty | リセット後 | `1` | `1` | 合格 |
+| full | リセット後 | `1` | `1` | 合格 |
+| wp と rp | リセット後 | `1` | `1` | 合格 |
+| gb | リセット後 | `1` | `1` | 合格 |
+| cnt | リセット後 | `1` | `1` | 合格 |
+
+### CASE3 正常送受信
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+| empty | リセット後 | `1` | `1` | 合格 |
+| full | リセット後 | `1` | `1` | 合格 |
+| wp と rp | リセット後 | `1` | `1` | 合格 |
+| gb | リセット後 | `1` | `1` | 合格 |
+| cnt | リセット後 | `1` | `1` | 合格 |
 
 ### 総括
 | 項目 | 結果 |
