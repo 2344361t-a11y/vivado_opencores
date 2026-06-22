@@ -20,13 +20,13 @@
 - `data_read` による `data_valid` のクリア
 
 ## 合格条件
-- `tb_uart_loopback.v` 内のチェックで `TB_FAIL` が 0 件であること
+- `tb_generic_fifo_sc_a.v` 内のチェックで `TB_FAIL` が 0 件であること
 - 最終サマリに `fail=0` と表示されること
-- シミュレーションログに `TB_PATH`、`TB_INFO`、`uart_tx PATH`、`uart_rx PATH` が含まれること
+- `RESET`、`CASE1`、`CASE2`、`CASE3` の各テストケースで `TB_PASS` が表示されること
 
 ## Vivadoでの実行手順
 1. Vivado プロジェクトを開く。
-2. `tb_uart_loopback.v` を simulation top に設定する。
+2. `tb_generic_fifo_sc_a.v` を simulation top に設定する。
 3. Behavioral Simulation を実行する。
 4. Console ログを保存する。
 5. 以下の信号を含む波形を保存する。
