@@ -125,24 +125,27 @@ Vivado 実行時のログを以下に示す。
 [5357000] TB_PASS: CASE2 after all reads gb must be 0
 [5357000] TB_PASS: CASE2 after all reads cnt must be 0 actual=0 expected=0
 [5357000] TB_PATH: CASE3 clr behavior start
-[5360000] TB_CASE: CASE3 pre-clear write data=0x11
-[5367000] TB_INFO: after write_one din=0x11 dout=0x00 we=1 re=0 full=0 empty=0 wp=0x05 rp=0x04 gb=0 cnt=1 level=0
-[5380000] TB_CASE: CASE3 pre-clear write data=0x22
-[5387000] TB_INFO: after write_one din=0x22 dout=0x11 we=1 re=0 full=0 empty=0 wp=0x06 rp=0x04 gb=0 cnt=2 level=0
-[5400000] TB_CASE: CASE3 pre-clear write data=0x33
-[5407000] TB_INFO: after write_one din=0x33 dout=0x11 we=1 re=0 full=0 empty=0 wp=0x07 rp=0x04 gb=0 cnt=3 level=0
-[5410000] TB_PASS: CASE3 empty must be 0 before clr
-[5410000] TB_PASS: CASE3 cnt must be 3 before clr actual=3 expected=3
-[5420000] TB_CASE: CASE3 clr=1
-[5427000] TB_INFO: after clr active edge din=0x00 dout=0x11 we=0 re=0 full=0 empty=1 wp=0x00 rp=0x00 gb=0 cnt=0 level=0
-[5437000] TB_INFO: after clr released din=0x00 dout=0xfc we=0 re=0 full=0 empty=1 wp=0x00 rp=0x00 gb=0 cnt=0 level=0
-[5437000] TB_PASS: CASE3 after clr empty must be 1
-[5437000] TB_PASS: CASE3 after clr full must be 0
-[5437000] TB_PASS: CASE3 after clr wp must equal rp
-[5437000] TB_PASS: CASE3 after clr gb must be 0
-[5437000] TB_PASS: CASE3 after clr cnt must be 0 actual=0 expected=0
-[5437000] TB_SUMMARY: pass=35 fail=0
-[5437000] TB_PATH: simulation finished with PASS
+[5357000] TB_INFO: CASE3 pre-clear write sequence = 00, FF, A5, 5A
+[5360000] TB_CASE: CASE3 pre-clear write data=0x00
+[5367000] TB_INFO: after write_one din=0x00 dout=0x00 we=1 re=0 full=0 empty=0 wp=0x05 rp=0x04 gb=0 cnt=1 level=0
+[5380000] TB_CASE: CASE3 pre-clear write data=0xff
+[5387000] TB_INFO: after write_one din=0xff dout=0x00 we=1 re=0 full=0 empty=0 wp=0x06 rp=0x04 gb=0 cnt=2 level=0
+[5400000] TB_CASE: CASE3 pre-clear write data=0xa5
+[5407000] TB_INFO: after write_one din=0xa5 dout=0x00 we=1 re=0 full=0 empty=0 wp=0x07 rp=0x04 gb=0 cnt=3 level=0
+[5420000] TB_CASE: CASE3 pre-clear write data=0x5a
+[5427000] TB_INFO: after write_one din=0x5a dout=0x00 we=1 re=0 full=0 empty=0 wp=0x08 rp=0x04 gb=0 cnt=4 level=0
+[5430000] TB_PASS: CASE3 empty must be 0 before clr
+[5430000] TB_PASS: CASE3 cnt must be 4 before clr actual=4 expected=4
+[5440000] TB_CASE: CASE3 clr=1
+[5447000] TB_INFO: after clr active edge din=0x00 dout=0x00 we=0 re=0 full=0 empty=1 wp=0x00 rp=0x00 gb=0 cnt=0 level=0
+[5457000] TB_INFO: after clr released din=0x00 dout=0xfc we=0 re=0 full=0 empty=1 wp=0x00 rp=0x00 gb=0 cnt=0 level=0
+[5457000] TB_PASS: CASE3 after clr empty must be 1
+[5457000] TB_PASS: CASE3 after clr full must be 0
+[5457000] TB_PASS: CASE3 after clr wp must equal rp
+[5457000] TB_PASS: CASE3 after clr gb must be 0
+[5457000] TB_PASS: CASE3 after clr cnt must be 0 actual=0 expected=0
+[5457000] TB_SUMMARY: pass=35 fail=0
+[5457000] TB_PATH: simulation finished with PASS
 ```
 
 ## 評価結果まとめ
@@ -213,7 +216,7 @@ Vivado 実行時のログを以下に示す。
   - リセット後に `empty=1`、`full=0`、`wp=0x00`、`rp=0x00`、`gb=0`、`cnt=0` となることを確認した。
 ![図1 RESET確認波形](./images/reset.png)
 
-### 図2 正常確認波形
+### 図2 基本FIFO動作波形
 - 対象ケース: CASE1
 - 推奨表示信号:
   - `clk`
@@ -234,7 +237,7 @@ Vivado 実行時のログを以下に示す。
 - 説明:
   - `8'h00`、`8'hFF`、`8'hA5`、`8'h5A` を順に書き込み、同じ順序で読み出されることを確認した。
 
-![図2 正常確認波形](./images/case1.png)
+![図2 基本FIFO動作波形](./images/case1.png)
 
 ### 図3 CASE2 full確認波形
 - 対象ケース: CASE2
@@ -258,7 +261,7 @@ Vivado 実行時のログを以下に示す。
   - 256個書き込み後に `full=1`、`empty=0`、`wp==rp`、`gb=1`、`cnt=256` となることを確認した。
 ![図3 CASE2 full確認波形](./images/case2_full.png)
 
-### 図4 RESET確認波形
+### 図4 empty確認波形
 - 対象ケース: CASE2
 - 推奨表示信号:
   - `clk`
