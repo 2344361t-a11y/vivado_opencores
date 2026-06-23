@@ -7,7 +7,7 @@
   - `generic_dpram.v`
   - `timescale.v`
 - テストベンチ:
-  - `tb_generic_fifo_dc_20260622_135000.v`
+  - `tb_generic_fifo_dc.v`
 
 ## 評価目的
 - generic_fifo_dc.v が、期待値表どおりに動作することを確認する。
@@ -213,9 +213,9 @@ Vivado 実行時のログを以下に示す。
   - 256個のデータを書き込んだ後に `full=1` となることを確認した。
   - 1個読み出した後に `full=0` へ戻ることを確認した。
   
-  ![図3 full確認波形](./images/case2_full.png)
+![図3 full確認波形](./images/case2_full.png)
 
-  ### 図4 empty確認波形
+### 図4 empty確認波形
 - 対象ケース: CASE2
 - 推奨表示信号:
   - `rd_clk`
@@ -239,7 +239,7 @@ Vivado 実行時のログを以下に示す。
 
 ![図4 empty確認波形](./images/case2_empty.png)
 
-### 図4 `clr` クリア確認波形
+### 図5 `clr` クリア確認波形
 - 対象ケース: CASE3
 - 推奨表示信号:
   - `rd_clk`
@@ -259,6 +259,6 @@ Vivado 実行時のログを以下に示す。
   - `fail_count[31:0]`
 - 推奨表示時間帯: `12.67 us` から `12.83 us`
 - 説明:
-  - `8'h5A`、`8'hC3`、`8'h3C`、`8'hA5` を書き込んだ後、`clr=1` を入力することで FIFO が空状態へ戻ることを確認した。
+  - `8'h00`、`8'hFF`、`8'hA5`、`8'h5A` を書き込んだ後、`clr=1` を入力することで FIFO が空状態へ戻ることを確認した。
 
-![図4 `clr` クリア確認波形](./images/case3.png)
+![図5 `clr` クリア確認波形](./images/case3.png)
