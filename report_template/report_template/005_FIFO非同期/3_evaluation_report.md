@@ -63,37 +63,37 @@ Vivado 実行時のログを以下に示す。
 [177000] TB_PASS: RESET initial state must be empty
 [177000] TB_PATH: RESET initial state check end
 [177000] TB_PATH: CASE1 basic FIFO operation start
-[177000] TB_CASE: write 11,22,33,44 then read in same order
+[177000] TB_CASE: write 00,FF,A5,5A then read in same order
 [251000] TB_PASS: CASE1 empty must become 0 after writes
-[261000] TB_INFO: read expected=0x11 dout=0x11
-[261000] TB_PASS: CASE1 read data must be 0x11
-[289000] TB_INFO: read expected=0x22 dout=0x22
-[289000] TB_PASS: CASE1 read data must be 0x22
-[317000] TB_INFO: read expected=0x33 dout=0x33
-[317000] TB_PASS: CASE1 read data must be 0x33
-[345000] TB_INFO: read expected=0x44 dout=0x44
-[345000] TB_PASS: CASE1 read data must be 0x44
+[261000] TB_INFO: read expected=0x00 dout=0x00
+[261000] TB_PASS: CASE1 read data must be 0x00
+[289000] TB_INFO: read expected=0xff dout=0xff
+[289000] TB_PASS: CASE1 read data must be 0xFF
+[317000] TB_INFO: read expected=0xa5 dout=0xa5
+[317000] TB_PASS: CASE1 read data must be 0xA5
+[345000] TB_INFO: read expected=0x5a dout=0x5a
+[345000] TB_PASS: CASE1 read data must be 0x5A
 [351000] TB_PASS: CASE1 empty must return to 1 after reads
 [351000] TB_PATH: CASE1 basic FIFO operation end
 [351000] TB_PATH: CASE2 full/empty recovery start
-[351000] TB_CASE: write 00-FF, read first, write A5, read remaining data
+[351000] TB_CASE: write 00-FF then read 00-FF
 [5471000] TB_PASS: CASE2 full must become 1 after 256 writes
 [5483000] TB_INFO: read expected=0x00 dout=0x00
 [5483000] TB_PASS: CASE2 first read after full must be 0x00
 [5497000] TB_PASS: CASE2 full must return to 0 after one read
-[12643000] TB_PASS: CASE2 remaining 0x01-0xFF data must match
-[12665000] TB_INFO: read expected=0xa5 dout=0xa5
-[12665000] TB_PASS: CASE2 last read data must be additional 0xA5
-[12671000] TB_PASS: CASE2 empty must become 1 after all reads
-[12671000] TB_PATH: CASE2 full/empty recovery end
-[12671000] TB_PATH: CASE3 clr clear check start
-[12671000] TB_CASE: write 5A,C3,3C,A5 then clear
-[12751000] TB_PASS: CASE3 empty must become 0 before clr
-[12751000] TB_CASE: pulse_clr
-[12945000] TB_PASS: CASE3 clr must clear FIFO state
-[12945000] TB_PATH: CASE3 clr clear check end
-[12945000] TB_SUMMARY: pass=15 fail=0
-[12945000] TB_PATH: simulation finished PASS
+[12601000] TB_PASS: CASE2 remaining 0x01-0xFE data must match
+[12623000] TB_INFO: read expected=0xff dout=0xff
+[12623000] TB_PASS: CASE2 last read data must be 0xFF
+[12629000] TB_PASS: CASE2 empty must become 1 after all reads
+[12629000] TB_PATH: CASE2 full/empty recovery end
+[12629000] TB_PATH: CASE3 clr clear check start
+[12629000] TB_CASE: write 00,FF,A5,5A then clear
+[12701000] TB_PASS: CASE3 empty must become 0 before clr
+[12701000] TB_CASE: pulse_clr
+[12903000] TB_PASS: CASE3 clr must clear FIFO state
+[12903000] TB_PATH: CASE3 clr clear check end
+[12903000] TB_SUMMARY: pass=15 fail=0
+[12903000] TB_PATH: simulation finished PASS
 ```
 
 ## 評価結果まとめ
@@ -119,7 +119,7 @@ Vivado 実行時のログを以下に示す。
 | 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
 | --- | --- | --- | --- | --- |
 | full 到達 | `8'h00` から `8'hFF` まで256個書き込み | `full=1` | `full=1` | 合格 |
-| full 後の最初の読み出し | full 状態から1個 read| `dout=8'h00` | `dout=8'h00` | 合格 |
+| full 後の最初の読み出し | full 状態から1個 read | `dout=8'h00` | `dout=8'h00` | 合格 |
 | full 解除 | 1個 read 後 | `full=0` | `full=0` | 合格 |
 | 残りデータの順序 | `8'h01` から `8'hFF` を読み出し | 連続データが順番に一致 | 一致 | 合格 |
 | 追加データの読み出し | 最後の read | `dout=8'hA5` | `dout=8'hA5` | 合格 |
@@ -129,7 +129,7 @@ Vivado 実行時のログを以下に示す。
 | 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
 | --- | --- | --- | --- | --- |
 | クリア前状態 | `8'h5A`, `8'hC3`, `8'h3C`, `8'hA5` を書き込み | `empty=0` | `empty=0` | 合格 |
-| clr 入力後 | clr=1 を入力 | `wp=0`,` rp=0`, `full=0`, `empty=1` | `wp=0`,` rp=0`, `full=0`, `empty=1` | 合格 |
+| clr 入力後 | clr=1 を入力 | `wp=0`,`rp=0`, `full=0`, `empty=1` | `wp=0`,`rp=0`, `full=0`, `empty=1` | 合格 |
 
 ### 総括
 | 項目 | 結果 |
