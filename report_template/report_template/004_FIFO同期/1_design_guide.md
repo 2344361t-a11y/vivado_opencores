@@ -4,7 +4,7 @@
 - `generic_fifo_sc_a.v`: FIFO同期回路
 - `generic_dpram.v`: FIFO内部で使用されるデュアルポートRAM
 - `timescale.v`: シミュレーション時間単位の設定ファイル
-- `tb_generic_fifo_sc_a_20260616_1449.v`: 検証用テストベンチ
+- `tb_generic_fifo_sc_a.v`: 検証用テストベンチ
 
 ## 回路概要
 
