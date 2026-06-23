@@ -279,7 +279,7 @@ Vivado 実行時のログを以下に示す。
 - 説明:
   - 正常な送受信により `rx_data=0x28`、`rx_done=1` となることを確認した。
 
-![図1 CASE2 empty確認波形](./images/case2_empty.png)
+![図4 CASE2 empty確認波形](./images/case2_empty.png)
 
 ### 図5 CLR確認波形
 - 対象ケース: CASE3
@@ -302,4 +302,4 @@ Vivado 実行時のログを以下に示す。
 - 説明:
   - 正常な送受信により `rx_data=0x28`、`rx_done=1` となることを確認した。
 
-![図1 CLR確認波形](./images/case3.png)
+![図5 CLR確認波形](./images/case3.png)
