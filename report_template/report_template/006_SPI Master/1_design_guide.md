@@ -63,7 +63,10 @@ cdiv	sck の分周
 今回の検証では、cdiv=2'b00 と cdiv=2'b01 を比較し、sck の周期が変化することを確認する。
 
 ## 構成図（ブロック図）
-![SPI Master回路図](./images/spi_master.png)
+![SPI Master_TB構成図](./images/spi_master.png)
+
+## 回路図
+![SPI Master回路図](./images/spi_master_module.png)
 
 ## `spi_master.v`
 ### 入力信号

@@ -185,23 +185,107 @@ Vivado 実行時のログを以下に示す。
 
 ## 波形キャプチャ貼付欄
 
+### 図1 リセット後の待機状態波形
+- 対象ケース: RESET
+- 推奨表示信号:
+  - `tb_rstb`
+  - `tb_clk`
+  - `tb_start`
+  - `tb_mlb`
+  - `tb_cdiv[1:0]`
+  - `tb_tdat[7:0]`
+  - `tb_din`
+  - `tb_ss`
+  - `tb_sck`
+  - `tb_dout`
+  - `tb_done`
+  - `tb_rdata[7:0]`
+- 推奨表示時間帯: `1.0 us` から `1.2 us`
+- 説明:
+  - 
+
+![図1 正常送受信波形](./images/case1.png)
+
 ### 図1 正常送受信波形
 - 対象ケース: CASE1
 - 推奨表示信号:
   - `tb_rstb`
   - `tb_clk`
-- `tb_start`
-- `tb_mlb`
-- `tb_cdiv[1:0]`
-- `tb_tdat[7:0]`
-- `tb_din`
-- `tb_ss`
-- `tb_sck`
-- `tb_dout`
-- `tb_done`
-- `tb_rdata[7:0]`
+  - `tb_start`
+  - `tb_mlb`
+  - `tb_cdiv[1:0]`
+  - `tb_tdat[7:0]`
+  - `tb_din`
+  - `tb_ss`
+  - `tb_sck`
+  - `tb_dout`
+  - `tb_done`
+  - `tb_rdata[7:0]`
 - 推奨表示時間帯: `1.0 us` から `1.2 us`
 - 説明:
-  - 正常な送受信により `rx_data=0x28`、`rx_done=1`、`rx_parity_error=0`、`rx_framing_error=0` となることを確認した。
+  - 
+
+![図1 正常送受信波形](./images/case1.png)
+
+### 図1 正常送受信波形
+- 対象ケース: CASE1
+- 推奨表示信号:
+  - `tb_rstb`
+  - `tb_clk`
+  - `tb_start`
+  - `tb_mlb`
+  - `tb_cdiv[1:0]`
+  - `tb_tdat[7:0]`
+  - `tb_din`
+  - `tb_ss`
+  - `tb_sck`
+  - `tb_dout`
+  - `tb_done`
+  - `tb_rdata[7:0]`
+- 推奨表示時間帯: `1.0 us` から `1.2 us`
+- 説明:
+  - 
+
+![図1 正常送受信波形](./images/case1.png)
+
+### 図1 正常送受信波形
+- 対象ケース: CASE1
+- 推奨表示信号:
+  - `tb_rstb`
+  - `tb_clk`
+  - `tb_start`
+  - `tb_mlb`
+  - `tb_cdiv[1:0]`
+  - `tb_tdat[7:0]`
+  - `tb_din`
+  - `tb_ss`
+  - `tb_sck`
+  - `tb_dout`
+  - `tb_done`
+  - `tb_rdata[7:0]`
+- 推奨表示時間帯: `1.0 us` から `1.2 us`
+- 説明:
+  - 
+
+![図1 正常送受信波形](./images/case1.png)
+
+### 図1 正常送受信波形
+- 対象ケース: CASE1
+- 推奨表示信号:
+  - `tb_rstb`
+  - `tb_clk`
+  - `tb_start`
+  - `tb_mlb`
+  - `tb_cdiv[1:0]`
+  - `tb_tdat[7:0]`
+  - `tb_din`
+  - `tb_ss`
+  - `tb_sck`
+  - `tb_dout`
+  - `tb_done`
+  - `tb_rdata[7:0]`
+- 推奨表示時間帯: `1.0 us` から `1.2 us`
+- 説明:
+  - 
 
 ![図1 正常送受信波形](./images/case1.png)
