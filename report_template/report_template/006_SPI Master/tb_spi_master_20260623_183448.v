@@ -204,6 +204,8 @@ module tb_spi_master;
         reg [7:0] captured_dout_seq;
         integer i;
         integer timeout_count;
+        integer post_idle_cycles;
+        reg second_transfer_detected;
         time t1;
         time t2;
         time measured_sck_period;
@@ -215,6 +217,7 @@ module tb_spi_master;
             expected_dout_seq = 8'h00;
             captured_dout_seq = 8'h00;
             measured_sck_period = 0;
+            second_transfer_detected = 1'b0;
 
             for (i = 0; i < 8; i = i + 1) begin
                 expected_dout_seq[i] = ordered_bit(tx_data, case_mlb, i);
@@ -296,6 +299,20 @@ module tb_spi_master;
             if (inject_mid_start == 1'b1) begin
                 check_case(case_name, captured_dout_seq === expected_dout_seq,
                            "mid-start must not change current transfer");
+
+                // The SPI master does not queue start requests received while
+                // a transfer is active. Observe the idle period long enough
+                // to catch a complete cdiv=00 transfer if one were started.
+                for (post_idle_cycles = 0; post_idle_cycles < 40; post_idle_cycles = post_idle_cycles + 1) begin
+                    @(posedge tb_clk);
+                    #1;
+                    if (tb_ss !== 1'b1)
+                        second_transfer_detected = 1'b1;
+                end
+                $display("[%0t] TB_INFO: %0s post_mid_start_second_transfer=%0b",
+                         $time, case_name, second_transfer_detected);
+                check_case(case_name, second_transfer_detected === 1'b0,
+                           "mid-start must not start a second transfer after completion");
             end
 
             repeat (5) @(posedge tb_clk);
