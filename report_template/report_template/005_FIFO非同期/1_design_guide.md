@@ -44,7 +44,7 @@ FIFOの基本動作は以下の通りである。
 - FIFOが満杯のときは `full=1` となる。
 
 ## 構成図（ブロック図）
-![FIFO非同期構成図](./images/fifo_dc.png)
+![FIFO非同期構成図](./images/fifo_dc.svg)
 
 ## 回路図
 ![FIFO非同期回路図](./images/fifo_dc_module.png)
