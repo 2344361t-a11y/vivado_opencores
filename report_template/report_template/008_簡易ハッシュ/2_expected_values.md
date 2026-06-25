@@ -1,78 +1,205 @@
-# RS-232回路 期待値表
+# SHA-256簡易ハッシュ回路 期待値表
 
 ## テスト条件
+
+- シミュレーション時間単位: `1 ns / 1 ps`
 - クロック周期: `10 ns`
-- `CLKS_PER_BIT`: `10`
-- UART 1bit期間: `100 ns`
-- フレーム形式: `8E1`
-  - スタートビット 1bit
-  - データ 8bit
-  - 偶数パリティ 1bit
-  - ストップビット 1bit
+- リセット: `rst_i=1`でactive high
+- 入力単位: 512 bitブロックを32 bit word 16個として入力する
+- 出力単位: 256 bit digestを32 bit word 8個として読み出す
+- padding処理: テストベンチ側で実施し、`sha256.v`へはpadding済みブロックを入力する
+- 1ブロック目の書き込みコマンド: `cmd_i=3'b010`
+- 2ブロック目以降の書き込みコマンド: `cmd_i=3'b110`
+- digest読み出しコマンド: `cmd_i=3'b001`
 
 ## 期待値表
 
-| ケースID | テスト目的 | 入力 | 期待される出力 |
+| ケース | 入力条件 | 確認内容 | 期待値 |
 | --- | --- | --- | --- |
-| CASE1 | 正常な送受信 | `pulse_start(8'h28)` | `rx_done=1` が1クロックだけ立つ、`rx_data=8'h28`、`rx_data_valid=1`、`rx_parity_error=0`、`rx_framing_error=0`、`rx_overrun_error=0` |
-| CASE1-READ | 受信済みデータのクリア | CASE1 後に `pulse_data_read()` | `rx_data_valid=0`、`rx_overrun_error=0` |
-| CASE2 | パリティエラー検出 | `inject_frame(8'h55, 1'b1, 1'b1)` | `rx_done=0`、`rx_parity_error=1`、`rx_data_valid=0`、`rx_framing_error=0` |
-| CASE3 | フレーミングエラー検出 | `inject_frame(8'h33, 1'b0, 1'b0)` | `rx_done=0`、`rx_framing_error=1`、`rx_data_valid=0` |
-| CASE4-1 | オーバーラン前の正常受信 | `pulse_start(8'hA5)` | `rx_done=1`、`rx_data=8'hA5`、`rx_data_valid=1`、`rx_overrun_error=0` |
-| CASE4-2 | オーバーランエラー検出 | CASE4-1 後に `data_read` を行わず `pulse_start(8'h3C)` | `rx_done=1`、`rx_data=8'h3C`、`rx_data_valid=1`、`rx_overrun_error=1` |
-| CASE4-READ | オーバーラン状態のクリア | CASE4-2 後に `pulse_data_read()` | `rx_overrun_error=0`、`rx_data_valid=0` |
+| RESET | `rst_i=1` | 初期状態 | `cmd_o=4'b0000`、`text_o=32'h00000000`、`dut.busy=0` |
+| CASE1_SHA256_ABC_SINGLE_BLOCK | 文字列`abc`をpaddingした1ブロック | 基本的な1ブロックSHA-256計算 | digestが`ba7816bf...f20015ad`と一致する |
+| CASE2_SHA256_EMPTY_SINGLE_BLOCK | 空入力をpaddingした1ブロック | 実データがない場合の特殊入力 | digestが`e3b0c442...7852b855`と一致する |
+| CASE3_SHA256_MULTI_BLOCK | 長い文字列をpaddingした2ブロック | 継続ブロック処理 | digestが`248d6a61...19db06c1`と一致する |
+
+各計算ケースでは、以下も共通して確認する。
+
+- 書き込み開始後に内部`busy`が`1`となること
+- `cmd_o[3]`が計算中に`1`となること
+- 計算完了後に`cmd_o[3]`が`0`へ戻ること
+- 読み出しコマンド後に`text_o`からdigestが上位32 bit wordから順番に出力されること
+- 各32 bit wordおよび256 bit全体のdigestが期待値と一致すること
+
+## 入力ブロックと期待digest
+
+### CASE1_SHA256_ABC_SINGLE_BLOCK
+
+入力メッセージは文字列`abc`である。SHA-256 padding後の512 bitブロックは以下の通りである。
+
+| word | 値 |
+| --- | --- |
+| W0 | `32'h61626380` |
+| W1 | `32'h00000000` |
+| W2 | `32'h00000000` |
+| W3 | `32'h00000000` |
+| W4 | `32'h00000000` |
+| W5 | `32'h00000000` |
+| W6 | `32'h00000000` |
+| W7 | `32'h00000000` |
+| W8 | `32'h00000000` |
+| W9 | `32'h00000000` |
+| W10 | `32'h00000000` |
+| W11 | `32'h00000000` |
+| W12 | `32'h00000000` |
+| W13 | `32'h00000000` |
+| W14 | `32'h00000000` |
+| W15 | `32'h00000018` |
+
+期待digestは以下の通りである。
+
+| digest word | 期待値 |
+| --- | --- |
+| D0 | `32'hba7816bf` |
+| D1 | `32'h8f01cfea` |
+| D2 | `32'h414140de` |
+| D3 | `32'h5dae2223` |
+| D4 | `32'hb00361a3` |
+| D5 | `32'h96177a9c` |
+| D6 | `32'hb410ff61` |
+| D7 | `32'hf20015ad` |
+
+### CASE2_SHA256_EMPTY_SINGLE_BLOCK
+
+入力メッセージは空入力である。実データは存在せず、paddingとメッセージ長のみで1ブロックを構成する。
+
+| word | 値 |
+| --- | --- |
+| W0 | `32'h80000000` |
+| W1 | `32'h00000000` |
+| W2 | `32'h00000000` |
+| W3 | `32'h00000000` |
+| W4 | `32'h00000000` |
+| W5 | `32'h00000000` |
+| W6 | `32'h00000000` |
+| W7 | `32'h00000000` |
+| W8 | `32'h00000000` |
+| W9 | `32'h00000000` |
+| W10 | `32'h00000000` |
+| W11 | `32'h00000000` |
+| W12 | `32'h00000000` |
+| W13 | `32'h00000000` |
+| W14 | `32'h00000000` |
+| W15 | `32'h00000000` |
+
+期待digestは以下の通りである。
+
+| digest word | 期待値 |
+| --- | --- |
+| D0 | `32'he3b0c442` |
+| D1 | `32'h98fc1c14` |
+| D2 | `32'h9afbf4c8` |
+| D3 | `32'h996fb924` |
+| D4 | `32'h27ae41e4` |
+| D5 | `32'h649b934c` |
+| D6 | `32'ha495991b` |
+| D7 | `32'h7852b855` |
+
+### CASE3_SHA256_MULTI_BLOCK
+
+入力メッセージは、OpenCores付属テストベンチで用いられている以下の文字列である。
+
+```text
+abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq
+```
+
+この入力は56 byte、すなわち448 bitである。SHA-256のpaddingにより、2個の512 bitブロックとして処理される。
+
+1ブロック目は`cmd_i=3'b010`で入力する。
+
+| word | 値 |
+| --- | --- |
+| W0 | `32'h61626364` |
+| W1 | `32'h62636465` |
+| W2 | `32'h63646566` |
+| W3 | `32'h64656667` |
+| W4 | `32'h65666768` |
+| W5 | `32'h66676869` |
+| W6 | `32'h6768696a` |
+| W7 | `32'h68696a6b` |
+| W8 | `32'h696a6b6c` |
+| W9 | `32'h6a6b6c6d` |
+| W10 | `32'h6b6c6d6e` |
+| W11 | `32'h6c6d6e6f` |
+| W12 | `32'h6d6e6f70` |
+| W13 | `32'h6e6f7071` |
+| W14 | `32'h80000000` |
+| W15 | `32'h00000000` |
+
+2ブロック目は`cmd_i=3'b110`で入力する。
+
+| word | 値 |
+| --- | --- |
+| W0 | `32'h00000000` |
+| W1 | `32'h00000000` |
+| W2 | `32'h00000000` |
+| W3 | `32'h00000000` |
+| W4 | `32'h00000000` |
+| W5 | `32'h00000000` |
+| W6 | `32'h00000000` |
+| W7 | `32'h00000000` |
+| W8 | `32'h00000000` |
+| W9 | `32'h00000000` |
+| W10 | `32'h00000000` |
+| W11 | `32'h00000000` |
+| W12 | `32'h00000000` |
+| W13 | `32'h00000000` |
+| W14 | `32'h00000000` |
+| W15 | `32'h000001c0` |
+
+期待digestは以下の通りである。
+
+| digest word | 期待値 |
+| --- | --- |
+| D0 | `32'h248d6a61` |
+| D1 | `32'hd20638b8` |
+| D2 | `32'he5c02693` |
+| D3 | `32'h0c3e6039` |
+| D4 | `32'ha33ce459` |
+| D5 | `32'h64ff2167` |
+| D6 | `32'hf6ecedd4` |
+| D7 | `32'h19db06c1` |
 
 ## 実シミュレーション結果
-Vivado の実行ログより、上記の全ケースが期待どおりに確認できた。
 
-| ケースID | シミュレーション結果 | 判定 |
+Vivado Behavioral Simulationを実行した結果、全49判定が合格した。`TB_FAIL`は出力されず、最終結果は`TB_RESULT: PASS`であった。
+
+| ケース | 実シミュレーション結果 | 判定 |
 | --- | --- | --- |
-| CASE1 | `rx_data=0x28`、`rx_done=1`、`parity_error=0`、`framing_error=0` を確認 | 合格 |
-| CASE1-READ | `data_valid` のクリアを確認 | 合格 |
-| CASE2 | `rx_data=0x55`、`parity_error=1`、`rx_done=0` を確認 | 合格 |
-| CASE3 | `framing_error=1`、`rx_done=0` を確認 | 合格 |
-| CASE4-1 | `rx_data=0xA5`、`rx_done=1`、`overrun_error=0` を確認 | 合格 |
-| CASE4-2 | `rx_data=0x3C`、`overrun_error=1` を確認 | 合格 |
-| CASE4-READ | `overrun_error=0` のクリアを確認 | 合格 |
+| RESET | `cmd_o=4'b0000`、`text_o=32'h00000000`、`busy=0`を確認 | 合格 |
+| CASE1_SHA256_ABC_SINGLE_BLOCK | digestが`ba7816bf 8f01cfea 414140de 5dae2223 b00361a3 96177a9c b410ff61 f20015ad`と一致 | 合格 |
+| CASE2_SHA256_EMPTY_SINGLE_BLOCK | digestが`e3b0c442 98fc1c14 9afbf4c8 996fb924 27ae41e4 649b934c a495991b 7852b855`と一致 | 合格 |
+| CASE3_SHA256_MULTI_BLOCK | digestが`248d6a61 d20638b8 e5c02693 0c3e6039 a33ce459 64ff2167 f6ecedd4 19db06c1`と一致 | 合格 |
 
-## フレーム単位の期待値
+最終ログは以下の通りである。
 
-### CASE1: データ `8'h28`
-- 2進数表現: `0010_1000`
-- LSB first の送信順: `0,0,0,1,0,1,0,0`
-- `1` の個数: `2`
-- 偶数パリティ bit: `0`
-- フレーム全体: `0(start), 0,0,0,1,0,1,0,0, 0(parity), 1(stop)`
-
-### CASE2: データ `8'h55`
-- 2進数表現: `0101_0101`
-- `1` の個数: `4`
-- 正しい偶数パリティ bit: `0`
-- テストベンチで注入するパリティ bit: `1`
-- 期待結果: `parity_error=1`
-
-### CASE3: データ `8'h33`
-
-- 2進数表現: `0011_0011`
-- `1` の個数: `4`
-- 正しい偶数パリティ bit: `0`
-- テストベンチで注入する stop bit: `0`
-- 期待結果: `framing_error=1`
+```text
+[3105 ns] TB_SUMMARY: pass=49 fail=0
+[3105 ns] TB_RESULT: PASS
+```
 
 ## 期待されるログ出力
-- 送信側 RTL:
-  - `uart_tx PATH: IDLE->START`
-  - `uart_tx PATH: DATA->PARITY`
-  - `uart_tx PATH: STOP->IDLE tx_complete`
-- 受信側 RTL:
-  - `uart_rx PATH: IDLE->START`
-  - `uart_rx PATH: START->DATA`
-  - `uart_rx PATH: PARITY->STOP`
-  - `uart_rx PATH: STOP->IDLE rx_done=1 ...`
-  - `uart_rx PATH: STOP->IDLE error framing=... parity=...`
-- テストベンチ:
-  - `TB_PATH: CASE1 ...`
-  - `TB_PATH: CASE2 ...`
-  - `TB_PATH: CASE3 ...`
-  - `TB_PATH: CASE4 ...`
-  - `TB_SUMMARY: pass=... fail=...`
+
+テストベンチは、以下の種類のログを出力する。
+
+- `TB_PATH`: シミュレーション開始、リセット、各ケースの実行経路
+- `TB_CASE`: 書き込みブロック、読み出し開始などのケース内操作
+- `TB_INFO`: 入力word、digest word、内部状態、read counterなどの詳細情報
+- `TB_DUT_PATH`: 計算完了時やdigest読み出し完了時のDUT状態
+- `TB_PASS`: 各チェックの合格結果
+- `TB_FAIL`: 各チェックの不合格結果
+
+全ケースが期待通りに動作した場合、最終行付近には以下の内容が出力される想定である。
+
+```text
+TB_SUMMARY: pass=49 fail=0
+TB_RESULT: PASS
+```

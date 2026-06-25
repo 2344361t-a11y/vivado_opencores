@@ -1,315 +1,215 @@
-# RS-232回路 評価報告書
+# SHA-256簡易ハッシュ回路 評価報告書
 
 ## 評価対象
-- 対象回路:
-  - `uart_tx.v`
-  - `uart_rx.v`
-- テストベンチ:
-  - `tb_uart_loopback.v`
+
+- 対象回路: `sha256.v`
+- テストベンチ: `tb_sha256.v`
 
 ## 評価目的
-- 選定した RS-232/UART 回路が、期待値表どおりに動作することを確認する。
-- シミュレーションログから、以下の両方が判別できることを確認する。
-  - 回路の入出力値
-  - 回路本体およびテストベンチの実行パス
+
+- SHA-256計算回路が、padding済み512 bitブロックを32 bit word単位で受け取り、既知のSHA-256 digestを出力できることを確認する。
+- 1ブロック入力、空入力、複数ブロック入力を用いて、基本動作と特殊入力、および内部状態の引き継ぎ動作を確認する。
+- `cmd_i`、`cmd_w_i`、`cmd_o`による制御インターフェースが期待通りに動作することを確認する。
+- digest読み出し時に、`text_o`から上位32 bit wordから下位32 bit wordの順に出力されることを確認する。
 
 ## 評価項目
-- 正常送受信
-- パリティエラー検出
-- フレーミングエラー検出
-- オーバーランエラー検出
-- `data_read` による `data_valid` のクリア
+
+| 項目 | 確認内容 |
+| --- | --- |
+| リセット | `cmd_o=4'b0000`、`text_o=32'h00000000`、内部`busy=0`となること |
+| 1ブロック基本動作 | 文字列`abc`のSHA-256 digestが既知値と一致すること |
+| 空入力 | 空入力のSHA-256 digestが既知値と一致すること |
+| 複数ブロック処理 | 2ブロック入力で前ブロックの計算結果を引き継ぎ、最終digestが既知値と一致すること |
+| busy状態 | 書き込み開始後にbusyが立ち、計算完了後にbusyが下がること |
+| digest読み出し | 読み出しコマンド後に8個の32 bit wordが期待順序で出力されること |
 
 ## 合格条件
-- `tb_uart_loopback.v` 内のチェックで `TB_FAIL` が 0 件であること
-- 最終サマリに `fail=0` と表示されること
-- シミュレーションログに `TB_PATH`、`TB_INFO`、`uart_tx PATH`、`uart_rx PATH` が含まれること
+
+- `TB_FAIL`が出力されないこと
+- `TB_SUMMARY: pass=49 fail=0`が出力されること
+- `TB_RESULT: PASS`が出力されること
+- RESET、CASE1、CASE2、CASE3のすべてで期待値と実測値が一致すること
+- CASE3において、1ブロック目を`cmd_i=3'b010`、2ブロック目を`cmd_i=3'b110`で処理し、複数ブロック入力のdigestが期待値と一致すること
 
 ## Vivadoでの実行手順
-1. Vivado プロジェクトを開く。
-2. `tb_uart_loopback.v` を simulation top に設定する。
-3. Behavioral Simulation を実行する。
-4. Console ログを保存する。
-5. 以下の信号を含む波形を保存する。
-   - `tx_line`
-   - `rx_line`
-   - `rx_data`
-   - `rx_done`
-   - `rx_data_valid`
-   - `rx_parity_error`
-   - `rx_framing_error`
-   - `rx_overrun_error`
 
+1. Vivadoプロジェクトへ`sha256.v`をDesign Sourcesとして追加する。
+2. `tb_sha256.v`をSimulation Sourcesとして追加する。
+3. Simulation Topを`tb_sha256`に設定する。
+4. `Run Behavioral Simulation`を実行する。
+5. Consoleで`TB_SUMMARY`および`TB_RESULT`を確認する。
+6. Waveウィンドウへ以下の信号を追加し、各ケースの波形を保存する。
+
+- `tb_clk_i`
+- `tb_rst_i`
+- `tb_text_i[31:0]`
+- `tb_text_o[31:0]`
+- `tb_cmd_i[2:0]`
+- `tb_cmd_w_i`
+- `tb_cmd_o[3:0]`
+- `dut.busy`
+- `dut.round[6:0]`
+- `dut.read_counter[2:0]`
+- `pass_count[31:0]`
+- `fail_count[31:0]`
 
 ## シミュレーションログ
-Vivado 実行時のログを以下に示す。
+
+Vivado Behavioral Simulationを実行した結果、全ケースで期待値と実測値が一致した。主要ログを以下に示す。
 
 ```text
-[0] TB_PATH: reset sequence start
-[0] uart_rx PATH: reset -> IDLE
-[0] uart_tx PATH: reset -> IDLE
-[5000] uart_rx PATH: reset -> IDLE
-[5000] uart_tx PATH: reset -> IDLE
-[15000] uart_rx PATH: reset -> IDLE
-[15000] uart_tx PATH: reset -> IDLE
-[20000] TB_PATH: reset released
-[20000] TB_PATH: CASE1 normal loopback start
-[30000] TB_CASE: pulse_start data=0x28
-[35000] uart_tx PATH: IDLE->START data=0x28 parity=0
-[55000] uart_rx PATH: IDLE->START start_detected
-[115000] uart_rx PATH: START->DATA start_confirmed
-[135000] uart_tx PATH: START->DATA
-[215000] uart_rx DATA: bit_index=0 bit_value=0
-[235000] uart_tx DATA: bit_index=0 bit_value=0
-[315000] uart_rx DATA: bit_index=1 bit_value=0
-[335000] uart_tx DATA: bit_index=1 bit_value=0
-[415000] uart_rx DATA: bit_index=2 bit_value=0
-[435000] uart_tx DATA: bit_index=2 bit_value=0
-[515000] uart_rx DATA: bit_index=3 bit_value=1
-[535000] uart_tx DATA: bit_index=3 bit_value=1
-[615000] uart_rx DATA: bit_index=4 bit_value=0
-[635000] uart_tx DATA: bit_index=4 bit_value=0
-[715000] uart_rx DATA: bit_index=5 bit_value=1
-[735000] uart_tx DATA: bit_index=5 bit_value=1
-[815000] uart_rx DATA: bit_index=6 bit_value=0
-[835000] uart_tx DATA: bit_index=6 bit_value=0
-[915000] uart_rx DATA: bit_index=7 bit_value=0
-[915000] uart_rx PATH: DATA->PARITY
-[935000] uart_tx DATA: bit_index=7 bit_value=0
-[935000] uart_tx PATH: DATA->PARITY
-[1015000] uart_rx PATH: PARITY->STOP rx_parity=0 expected=0 parity_error=0
-[1035000] uart_tx PATH: PARITY->STOP parity=0
-[1115000] uart_rx PATH: STOP->IDLE rx_done=1 data=0x28 overrun=0
-[1125000] TB_INFO: rx_done=1 data=0x28 data_valid=1 overrun=0
-[1125000] TB_PASS:                                                       CASE1 rx_data must be 0x28
-[1125000] TB_PASS:                                                       CASE1 data_valid must be 1
-[1125000] TB_PASS:                                                     CASE1 parity_error must be 0
-[1125000] TB_PASS:                                                    CASE1 framing_error must be 0
-[1130000] TB_CASE: pulse_data_read
-[1135000] TB_INFO: data_read=1 data_valid=1 overrun=0
-[1135000] uart_rx PATH: data_read -> clear data_valid/overrun
-[1135000] uart_tx PATH: STOP->IDLE tx_complete
-[1145000] TB_PASS:                                           CASE1 data_valid must clear after read
-[1145000] TB_PATH: CASE2 parity error start
-[1160000] TB_CASE: inject_frame data=0x55 parity=1 stop=1
-[1165000] uart_rx PATH: IDLE->START start_detected
-[1225000] uart_rx PATH: START->DATA start_confirmed
-[1325000] uart_rx DATA: bit_index=0 bit_value=1
-[1425000] uart_rx DATA: bit_index=1 bit_value=0
-[1525000] uart_rx DATA: bit_index=2 bit_value=1
-[1625000] uart_rx DATA: bit_index=3 bit_value=0
-[1725000] uart_rx DATA: bit_index=4 bit_value=1
-[1825000] uart_rx DATA: bit_index=5 bit_value=0
-[1925000] uart_rx DATA: bit_index=6 bit_value=1
-[2025000] uart_rx DATA: bit_index=7 bit_value=0
-[2025000] uart_rx PATH: DATA->PARITY
-[2125000] uart_rx PATH: PARITY->STOP rx_parity=1 expected=0 parity_error=1
-[2135000] TB_INFO: parity_error=1 rx_data=0x55
-[2145000] TB_INFO: parity_error=1 rx_data=0x55
-[2155000] TB_INFO: parity_error=1 rx_data=0x55
-[2165000] TB_INFO: parity_error=1 rx_data=0x55
-[2175000] TB_INFO: parity_error=1 rx_data=0x55
-[2185000] TB_INFO: parity_error=1 rx_data=0x55
-[2195000] TB_INFO: parity_error=1 rx_data=0x55
-[2205000] TB_INFO: parity_error=1 rx_data=0x55
-[2215000] TB_INFO: parity_error=1 rx_data=0x55
-[2225000] TB_INFO: parity_error=1 rx_data=0x55
-[2225000] uart_rx PATH: STOP->IDLE error framing=0 parity=1
-[2235000] TB_INFO: parity_error=1 rx_data=0x55
-[2260000] TB_PASS:                                        CASE2 rx_done must stay 0 on parity error
-[2260000] TB_PASS:                                                     CASE2 parity_error must be 1
-[2260000] TB_PASS:                                                   CASE2 data_valid must remain 0
-[2265000] TB_PATH: CASE3 framing error start
-[2280000] TB_CASE: inject_frame data=0x33 parity=0 stop=0
-[2285000] uart_rx PATH: IDLE->START start_detected
-[2345000] uart_rx PATH: START->DATA start_confirmed
-[2445000] uart_rx DATA: bit_index=0 bit_value=1
-[2545000] uart_rx DATA: bit_index=1 bit_value=1
-[2645000] uart_rx DATA: bit_index=2 bit_value=0
-[2745000] uart_rx DATA: bit_index=3 bit_value=0
-[2845000] uart_rx DATA: bit_index=4 bit_value=1
-[2945000] uart_rx DATA: bit_index=5 bit_value=1
-[3045000] uart_rx DATA: bit_index=6 bit_value=0
-[3145000] uart_rx DATA: bit_index=7 bit_value=0
-[3145000] uart_rx PATH: DATA->PARITY
-[3245000] uart_rx PATH: PARITY->STOP rx_parity=0 expected=0 parity_error=0
-[3345000] uart_rx PATH: STOP->IDLE error framing=1 parity=0
-[3355000] TB_INFO: framing_error=1 rx_line=0
-[3355000] uart_rx PATH: IDLE->START start_detected
-[3380000] TB_PASS:                                       CASE3 rx_done must stay 0 on framing error
-[3380000] TB_PASS:                                                    CASE3 framing_error must be 1
-[3380000] TB_PASS:                                                   CASE3 data_valid must remain 0
-[3385000] TB_PATH: CASE4 overrun start
-[3400000] TB_CASE: pulse_start data=0xa5
-[3405000] uart_tx PATH: IDLE->START data=0xa5 parity=0
-[3415000] uart_rx PATH: START->IDLE false_start
-[3425000] uart_rx PATH: IDLE->START start_detected
-[3485000] uart_rx PATH: START->DATA start_confirmed
-[3505000] uart_tx PATH: START->DATA
-[3585000] uart_rx DATA: bit_index=0 bit_value=1
-[3605000] uart_tx DATA: bit_index=0 bit_value=1
-[3685000] uart_rx DATA: bit_index=1 bit_value=0
-[3705000] uart_tx DATA: bit_index=1 bit_value=0
-[3785000] uart_rx DATA: bit_index=2 bit_value=1
-[3805000] uart_tx DATA: bit_index=2 bit_value=1
-[3885000] uart_rx DATA: bit_index=3 bit_value=0
-[3905000] uart_tx DATA: bit_index=3 bit_value=0
-[3985000] uart_rx DATA: bit_index=4 bit_value=0
-[4005000] uart_tx DATA: bit_index=4 bit_value=0
-[4085000] uart_rx DATA: bit_index=5 bit_value=1
-[4105000] uart_tx DATA: bit_index=5 bit_value=1
-[4185000] uart_rx DATA: bit_index=6 bit_value=0
-[4205000] uart_tx DATA: bit_index=6 bit_value=0
-[4285000] uart_rx DATA: bit_index=7 bit_value=1
-[4285000] uart_rx PATH: DATA->PARITY
-[4305000] uart_tx DATA: bit_index=7 bit_value=1
-[4305000] uart_tx PATH: DATA->PARITY
-[4385000] uart_rx PATH: PARITY->STOP rx_parity=0 expected=0 parity_error=0
-[4405000] uart_tx PATH: PARITY->STOP parity=0
-[4485000] uart_rx PATH: STOP->IDLE rx_done=1 data=0xa5 overrun=0
-[4495000] TB_INFO: rx_done=1 data=0xa5 data_valid=1 overrun=0
-[4495000] TB_PASS:                                                 CASE4 first rx_data must be 0xA5
-[4495000] TB_PASS:                                                 CASE4 first data_valid must be 1
-[4505000] uart_tx PATH: STOP->IDLE tx_complete
-[4520000] TB_CASE: pulse_start data=0x3c
-[4525000] uart_tx PATH: IDLE->START data=0x3c parity=0
-[4545000] uart_rx PATH: IDLE->START start_detected
-[4605000] uart_rx PATH: START->DATA start_confirmed
-[4625000] uart_tx PATH: START->DATA
-[4705000] uart_rx DATA: bit_index=0 bit_value=0
-[4725000] uart_tx DATA: bit_index=0 bit_value=0
-[4805000] uart_rx DATA: bit_index=1 bit_value=0
-[4825000] uart_tx DATA: bit_index=1 bit_value=0
-[4905000] uart_rx DATA: bit_index=2 bit_value=1
-[4925000] uart_tx DATA: bit_index=2 bit_value=1
-[5005000] uart_rx DATA: bit_index=3 bit_value=1
-[5025000] uart_tx DATA: bit_index=3 bit_value=1
-[5105000] uart_rx DATA: bit_index=4 bit_value=1
-[5125000] uart_tx DATA: bit_index=4 bit_value=1
-[5205000] uart_rx DATA: bit_index=5 bit_value=1
-[5225000] uart_tx DATA: bit_index=5 bit_value=1
-[5305000] uart_rx DATA: bit_index=6 bit_value=0
-[5325000] uart_tx DATA: bit_index=6 bit_value=0
-[5405000] uart_rx DATA: bit_index=7 bit_value=0
-[5405000] uart_rx PATH: DATA->PARITY
-[5425000] uart_tx DATA: bit_index=7 bit_value=0
-[5425000] uart_tx PATH: DATA->PARITY
-[5505000] uart_rx PATH: PARITY->STOP rx_parity=0 expected=0 parity_error=0
-[5525000] uart_tx PATH: PARITY->STOP parity=0
-[5605000] uart_rx PATH: STOP->IDLE rx_done=1 data=0x3c overrun=1
-[5615000] TB_INFO: rx_done=1 data=0x3c data_valid=1 overrun=1
-[5615000] TB_PASS:                                                CASE4 second rx_data must be 0x3C
-[5615000] TB_PASS:                                                    CASE4 overrun_error must be 1
-[5615000] TB_PASS:                                          CASE4 data_valid must stay 1 until read
-[5620000] TB_CASE: pulse_data_read
-[5625000] TB_INFO: data_read=1 data_valid=1 overrun=1
-[5625000] uart_rx PATH: data_read -> clear data_valid/overrun
-[5625000] uart_tx PATH: STOP->IDLE tx_complete
-[5635000] TB_PASS:                                        CASE4 overrun_error must clear after read
-[5635000] TB_SUMMARY: pass=17 fail=0
+[26 ns] TB_DUT_PATH: during reset cmd_o=0b0000 text_o=0x00000000 busy=0 round=0
+[26 ns] TB_PASS: RESET cmd_o must be 0
+[26 ns] TB_PASS: RESET text_o must be 0x00000000
+[26 ns] TB_PASS: RESET internal busy must be 0
+
+[706 ns] TB_DUT_PATH: CASE1_SHA256_ABC_SINGLE_BLOCK calculation complete cmd_o=0b0000 busy=0 round=0
+[736 ns] TB_INFO: CASE1_SHA256_ABC_SINGLE_BLOCK digest_word0 expected=0xba7816bf actual=0xba7816bf read_counter=6
+[806 ns] TB_INFO: CASE1_SHA256_ABC_SINGLE_BLOCK digest_word7 expected=0xf20015ad actual=0xf20015ad read_counter=0
+[806 ns] TB_PASS: CASE1_SHA256_ABC_SINGLE_BLOCK full digest must match expected
+
+[1506 ns] TB_DUT_PATH: CASE2_SHA256_EMPTY_SINGLE_BLOCK calculation complete cmd_o=0b0000 busy=0 round=0
+[1536 ns] TB_INFO: CASE2_SHA256_EMPTY_SINGLE_BLOCK digest_word0 expected=0xe3b0c442 actual=0xe3b0c442 read_counter=6
+[1606 ns] TB_INFO: CASE2_SHA256_EMPTY_SINGLE_BLOCK digest_word7 expected=0x7852b855 actual=0x7852b855 read_counter=0
+[1606 ns] TB_PASS: CASE2_SHA256_EMPTY_SINGLE_BLOCK full digest must match expected
+
+[2306 ns] TB_DUT_PATH: CASE3_SHA256_MULTI_BLOCK_BLOCK0 calculation complete cmd_o=0b0000 busy=0 round=0
+[2976 ns] TB_DUT_PATH: CASE3_SHA256_MULTI_BLOCK_BLOCK1 calculation complete cmd_o=0b0100 busy=0 round=0
+[3006 ns] TB_INFO: CASE3_SHA256_MULTI_BLOCK digest_word0 expected=0x248d6a61 actual=0x248d6a61 read_counter=6
+[3076 ns] TB_INFO: CASE3_SHA256_MULTI_BLOCK digest_word7 expected=0x19db06c1 actual=0x19db06c1 read_counter=0
+[3076 ns] TB_PASS: CASE3_SHA256_MULTI_BLOCK full digest must match expected
+
+[3105 ns] TB_SUMMARY: pass=49 fail=0
+[3105 ns] TB_RESULT: PASS
 ```
 
 ## 評価結果まとめ
-### CASE1 正常送受信
-| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
-| --- | --- | --- | --- | --- |
-| 送受信 | `pulse_start(8'h28)` | `rx_data=8'h28` | `rx_data=8'h28` | 合格 |
-| 受信完了 | `pulse_start(8'h28)` | `rx_done=1` | `rx_done=1` | 合格 |
-| 有効データ保持 | 正常受信後 | `rx_data_valid=1` | `rx_data_valid=1` | 合格 |
-| パリティ異常なし | 正常受信後 | `rx_parity_error=0` | `rx_parity_error=0` | 合格 |
-| フレーミング異常なし | 正常受信後 | `rx_framing_error=0` | `rx_framing_error=0` | 合格 |
-| 読出し後クリア | `pulse_data_read()` 後 | `rx_data_valid=0` | `rx_data_valid=0` | 合格 |
 
-### CASE2 パリティエラー検出
-| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
-| --- | --- | --- | --- | --- |
-| 異常フレーム注入 | `inject_frame(8'h55, 1'b1, 1'b1)` | `rx_data=8'h55` | `rx_data=8'h55` | 合格 |
-| パリティエラー検出 | 上記入力後 | `rx_parity_error=1` | `rx_parity_error=1` | 合格 |
-| 正常受信不成立 | 上記入力後 | `rx_done=0` | `rx_done=0` | 合格 |
-| 有効データ未設定 | 上記入力後 | `rx_data_valid=0` | `rx_data_valid=0` | 合格 |
+### RESET リセット状態確認
 
-### CASE3 フレーミングエラー検出
 | 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
 | --- | --- | --- | --- | --- |
-| 異常フレーム注入 | `inject_frame(8'h33, 1'b0, 1'b0)` | `rx_data=8'h33` を受信途中で観測 | `rx_data=8'h33` 相当のビット列を観測 | 合格 |
-| フレーミングエラー検出 | 上記入力後 | `rx_framing_error=1` | `rx_framing_error=1` | 合格 |
-| 正常受信不成立 | 上記入力後 | `rx_done=0` | `rx_done=0` | 合格 |
-| 有効データ未設定 | 上記入力後 | `rx_data_valid=0` | `rx_data_valid=0` | 合格 |
+| コマンド状態 | `rst_i=1` | `cmd_o=4'b0000` | `cmd_o=4'b0000` | 合格 |
+| 出力データ | `rst_i=1` | `text_o=32'h00000000` | `text_o=32'h00000000` | 合格 |
+| 内部busy | `rst_i=1` | `busy=0` | `busy=0` | 合格 |
 
-### CASE4 オーバーランエラー検出
+### CASE1_SHA256_ABC_SINGLE_BLOCK 基本動作確認
+
 | 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
 | --- | --- | --- | --- | --- |
-| 1回目正常受信 | `pulse_start(8'hA5)` | `rx_data=8'hA5` | `rx_data=8'hA5` | 合格 |
-| 1回目受信後状態 | 1回目正常受信後 | `rx_data_valid=1` | `rx_data_valid=1` | 合格 |
-| 2回目正常受信 | 未読のまま `pulse_start(8'h3C)` | `rx_data=8'h3C` | `rx_data=8'h3C` | 合格 |
-| オーバーラン検出 | 2回目正常受信後 | `rx_overrun_error=1` | `rx_overrun_error=1` | 合格 |
-| 未読状態保持 | 2回目正常受信後 | `rx_data_valid=1` | `rx_data_valid=1` | 合格 |
-| 読出し後クリア | `pulse_data_read()` 後 | `rx_overrun_error=0` | `rx_overrun_error=0` | 合格 |
+| 入力ブロック | `abc`をpaddingした1ブロック | W0=`32'h61626380`、W15=`32'h00000018` | W0=`32'h61626380`、W15=`32'h00000018` | 合格 |
+| busy遷移 | 書き込み開始後 | `busy=1`、計算完了後`cmd_o[3]=0` | `busy=1`、完了時`cmd_o=4'b0000` | 合格 |
+| digest word | 読み出しコマンド後 | `ba7816bf 8f01cfea 414140de 5dae2223 b00361a3 96177a9c b410ff61 f20015ad` | `ba7816bf 8f01cfea 414140de 5dae2223 b00361a3 96177a9c b410ff61 f20015ad` | 合格 |
+| 全体digest | 8 word読み出し後 | 期待digestと一致 | 期待digestと一致 | 合格 |
+
+### CASE2_SHA256_EMPTY_SINGLE_BLOCK 空入力確認
+
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+| 入力ブロック | 空入力をpaddingした1ブロック | W0=`32'h80000000`、W1からW15=`32'h00000000` | W0=`32'h80000000`、W1からW15=`32'h00000000` | 合格 |
+| busy遷移 | 書き込み開始後 | `busy=1`、計算完了後`cmd_o[3]=0` | `busy=1`、完了時`cmd_o=4'b0000` | 合格 |
+| digest word | 読み出しコマンド後 | `e3b0c442 98fc1c14 9afbf4c8 996fb924 27ae41e4 649b934c a495991b 7852b855` | `e3b0c442 98fc1c14 9afbf4c8 996fb924 27ae41e4 649b934c a495991b 7852b855` | 合格 |
+| 全体digest | 8 word読み出し後 | 期待digestと一致 | 期待digestと一致 | 合格 |
+
+### CASE3_SHA256_MULTI_BLOCK 複数ブロック処理確認
+
+| 項目 | 入力条件 | 期待値 | 実測値 | 判定 |
+| --- | --- | --- | --- | --- |
+| 1ブロック目 | `cmd_i=3'b010` | 初期ハッシュ値から計算を開始する | `cmd_o=4'b0010`で書き込み開始、完了時`cmd_o=4'b0000` | 合格 |
+| 2ブロック目 | `cmd_i=3'b110` | 前ブロックの計算結果を引き継ぐ | `cmd_o=4'b0110`で書き込み開始、完了時`cmd_o=4'b0100` | 合格 |
+| busy遷移 | 各ブロック書き込み後 | 各ブロックでbusyが立ち、完了後に下がる | 各ブロックで`busy=1`を確認し、完了後`busy=0`を確認 | 合格 |
+| digest word | 読み出しコマンド後 | `248d6a61 d20638b8 e5c02693 0c3e6039 a33ce459 64ff2167 f6ecedd4 19db06c1` | `248d6a61 d20638b8 e5c02693 0c3e6039 a33ce459 64ff2167 f6ecedd4 19db06c1` | 合格 |
+| 全体digest | 8 word読み出し後 | 期待digestと一致 | 期待digestと一致 | 合格 |
 
 ### 総括
-| 項目 | 結果 |
-| --- | --- |
-| 総判定 | 合格 |
-| 判定数 | `pass=17` |
-| 不合格数 | `fail=0` |
-| 結論 | 対象回路の主要機能は期待値どおりに動作したことを確認した |
+
+RESET、`abc`の1ブロック入力、空入力、複数ブロック入力の全ケースにおいて、期待値と実測値が一致した。特に、CASE1では基本的な1ブロックSHA-256計算、CASE2では実データを持たないpaddingのみの入力、CASE3では`cmd_i=3'b010`と`cmd_i=3'b110`を用いた継続ブロック処理を確認できた。
+
+最終結果は`TB_SUMMARY: pass=49 fail=0`および`TB_RESULT: PASS`であり、本テストベンチの評価範囲において、`sha256.v`は期待通りに動作した。
 
 ## 波形キャプチャ貼付欄
 
-### 図1 正常送受信波形
-- 対象ケース: CASE1
-- 推奨表示信号:
-  - `tx_line`
-  - `rx_line`
-  - `rx_data`
-  - `rx_done`
-  - `rx_data_valid`
-  - `rx_parity_error`
-  - `rx_framing_error`
-- 推奨表示時間帯: `1.0 us` から `1.2 us`
-- 説明:
-  - 正常な送受信により `rx_data=0x28`、`rx_done=1`、`rx_parity_error=0`、`rx_framing_error=0` となることを確認した。
+### 図1 RESET確認波形
 
-![図1 正常送受信波形](./images/case1.png)
+![SHA-256 RESET確認波形](./images/reset.png)
 
-### 図2 パリティエラー検出波形
-- 対象ケース: CASE2
-- 推奨表示信号:
-  - `rx_line`
-  - `rx_data`
-  - `rx_done`
-  - `rx_parity_error`
-  - `rx_data_valid`
-- 推奨表示時間帯: `2.1 us` から `2.3 us`
-- 説明:
-  - parity bit を意図的に不正値とした結果、`rx_parity_error=1`、`rx_done=0` となることを確認した。
+- 対象ケース: `RESET`
+- 推奨表示信号
+  - `tb_clk_i`
+  - `tb_rst_i`
+  - `tb_cmd_o[3:0]`
+  - `tb_text_o[31:0]`
+  - `dut.busy`
+  - `pass_count[31:0]`
+  - `fail_count[31:0]`
+- 推奨表示時間帯: `0 ns`から`40 ns`
+- チェックポイント
+  - `rst_i=1`の間に`cmd_o=4'b0000`、`text_o=32'h00000000`、`dut.busy=0`となることを確認する。
 
-![図2 パリティエラー検出波形](./images/case2.png)
+### 図2 `abc`入力の1ブロック計算波形
 
-### 図3 フレーミングエラー検出波形
-- 対象ケース: CASE3
-- 推奨表示信号:
-  - `rx_line`
-  - `rx_done`
-  - `rx_framing_error`
-  - `rx_data_valid`
-- 推奨表示時間帯: `3.24 us` から `3.36 us`
-- 説明:
-  - stop bit を意図的に不正値とした結果、`rx_framing_error=1`、`rx_done=0` となることを確認した。
+![SHA-256 `abc`入力の1ブロック計算波形](./images/case1.png)
 
-![図3 フレーミングエラー検出波形](./images/case3.png)
+- 対象ケース: `CASE1_SHA256_ABC_SINGLE_BLOCK`
+- 推奨表示信号
+  - `tb_clk_i`
+  - `tb_text_i[31:0]`
+  - `tb_text_o[31:0]`
+  - `tb_cmd_i[2:0]`
+  - `tb_cmd_w_i`
+  - `tb_cmd_o[3:0]`
+  - `dut.busy`
+  - `dut.round[6:0]`
+  - `dut.read_counter[2:0]`
+  - `pass_count[31:0]`
+  - `fail_count[31:0]`
+- 推奨表示時間帯: `35 ns`から`820 ns`
+- チェックポイント
+  - 先頭wordとして`32'h61626380`が入力されることを確認する。
+  - 計算中に`cmd_o[3]`が`1`となり、計算完了後に`0`へ戻ることを確認する。
+  - 読み出し時に`text_o`から`ba7816bf`、`8f01cfea`、`414140de`の順でdigest wordが出力されることを確認する。
 
-### 図4 オーバーランエラー検出波形
-- 対象ケース: CASE4
-- 推奨表示信号:
-  - `tx_line`
-  - `rx_data`
-  - `rx_done`
-  - `rx_data_valid`
-  - `rx_overrun_error`
-  - `data_read`
-- 推奨表示時間帯: `4.45 us` から `5.65 us`
-- 説明:
-  - 未読データを残したまま次フレームを受信させることで `rx_overrun_error=1` となり、`data_read` 後にクリアされることを確認した。
+### 図3 空入力の1ブロック計算波形
 
-![図4 オーバーランエラー検出波形](./images/case4.png)
+![SHA-256 空入力の1ブロック計算波形](./images/case2.png)
+
+- 対象ケース: `CASE2_SHA256_EMPTY_SINGLE_BLOCK`
+- 推奨表示信号
+  - `tb_clk_i`
+  - `tb_text_i[31:0]`
+  - `tb_text_o[31:0]`
+  - `tb_cmd_i[2:0]`
+  - `tb_cmd_w_i`
+  - `tb_cmd_o[3:0]`
+  - `dut.busy`
+  - `dut.round[6:0]`
+  - `dut.read_counter[2:0]`
+  - `pass_count[31:0]`
+  - `fail_count[31:0]`
+- 推奨表示時間帯: `830 ns`から`1620 ns`
+- チェックポイント
+  - 先頭wordとして`32'h80000000`が入力され、残りの入力wordが`0`であることを確認する。
+  - 読み出し時に`text_o`から`e3b0c442`、`98fc1c14`、`9afbf4c8`の順でdigest wordが出力されることを確認する。
+
+### 図4 複数ブロック処理波形
+
+![SHA-256 複数ブロック処理波形](./images/case3.png)
+
+- 対象ケース: `CASE3_SHA256_MULTI_BLOCK`
+- 推奨表示信号
+  - `tb_clk_i`
+  - `tb_text_i[31:0]`
+  - `tb_text_o[31:0]`
+  - `tb_cmd_i[2:0]`
+  - `tb_cmd_w_i`
+  - `tb_cmd_o[3:0]`
+  - `dut.busy`
+  - `dut.round[6:0]`
+  - `dut.read_counter[2:0]`
+  - `pass_count[31:0]`
+  - `fail_count[31:0]`
+- 推奨表示時間帯: `1630 ns`から`3120 ns`
+- チェックポイント
+  - 1ブロック目で`cmd_i=3'b010`、2ブロック目で`cmd_i=3'b110`が入力されることを確認する。
+  - 各ブロックで`cmd_o[3]`が`1`となり、計算完了後に`0`へ戻ることを確認する。
+  - 最終読み出し時に`text_o`から`248d6a61`、`d20638b8`、`e5c02693`の順でdigest wordが出力されることを確認する。
