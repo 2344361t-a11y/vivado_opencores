@@ -1,78 +1,82 @@
-# RS-232回路 期待値表
+# SPI Slave回路 期待値表
 
 ## テスト条件
-- クロック周期: `10 ns`
-- `CLKS_PER_BIT`: `10`
-- UART 1bit期間: `100 ns`
-- フレーム形式: `8E1`
-  - スタートビット 1bit
-  - データ 8bit
-  - 偶数パリティ 1bit
-  - ストップビット 1bit
+
+- シミュレーション時間単位: `1 ns / 1 ps`
+- SPI動作モード: mode 3
+- `sck`アイドル値: High
+- `sck`立下り: `sdout`の更新点
+- `sck`立上り: `sdin`の受信点
+- データ幅: 8 bit
+- `sck`の周期: 21 ns（Low期間: 10 ns、High期間: 11 ns）
+- スレーブ選択: `ss=0`で選択、`ss=1`で非選択
 
 ## 期待値表
 
-| ケースID | テスト目的 | 入力 | 期待される出力 |
-| --- | --- | --- | --- |
-| CASE1 | 正常な送受信 | `pulse_start(8'h28)` | `rx_done=1` が1クロックだけ立つ、`rx_data=8'h28`、`rx_data_valid=1`、`rx_parity_error=0`、`rx_framing_error=0`、`rx_overrun_error=0` |
-| CASE1-READ | 受信済みデータのクリア | CASE1 後に `pulse_data_read()` | `rx_data_valid=0`、`rx_overrun_error=0` |
-| CASE2 | パリティエラー検出 | `inject_frame(8'h55, 1'b1, 1'b1)` | `rx_done=0`、`rx_parity_error=1`、`rx_data_valid=0`、`rx_framing_error=0` |
-| CASE3 | フレーミングエラー検出 | `inject_frame(8'h33, 1'b0, 1'b0)` | `rx_done=0`、`rx_framing_error=1`、`rx_data_valid=0` |
-| CASE4-1 | オーバーラン前の正常受信 | `pulse_start(8'hA5)` | `rx_done=1`、`rx_data=8'hA5`、`rx_data_valid=1`、`rx_overrun_error=0` |
-| CASE4-2 | オーバーランエラー検出 | CASE4-1 後に `data_read` を行わず `pulse_start(8'h3C)` | `rx_done=1`、`rx_data=8'h3C`、`rx_data_valid=1`、`rx_overrun_error=1` |
-| CASE4-READ | オーバーラン状態のクリア | CASE4-2 後に `pulse_data_read()` | `rx_overrun_error=0`、`rx_data_valid=0` |
+| ケース | 入力条件 | 期待される`sdout` | 期待される`rdata` | 期待される`done` |
+| --- | --- | --- | --- | --- |
+| RESET | `rstb=0`、`ss=1` | `Z` | `8'h00` | `0` |
+| CASE1_LSB_BASIC | `mlb=0`、`ten=1`、`ss=0`、`tdata=8'h96`、`sdin=8'h53` | `0,1,1,0,1,0,0,1` | `8'h53` | 8 bit受信後に`1` |
+| CASE2_MSB_BASIC | `mlb=1`、`ten=1`、`ss=0`、`tdata=8'h96`、`sdin=8'h53` | `1,0,0,1,0,1,1,0` | `8'h53` | 8 bit受信後に`1` |
+| CASE3_TEN_DISABLED | `mlb=0`、`ten=0`、`ss=0`、`tdata=8'h96`、`sdin=8'h3A` | 常に`Z` | `8'h3A` | 8 bit受信後に`1` |
+| CASE4_SS_INACTIVE | `mlb=0`、`ten=1`、`ss=1`、`tdata=8'h96`、`sdin=8'h53` | 常に`Z` | `8'h00`を維持 | `0`を維持 |
+
+`8'h96`、`8'h53`および`8'h3A`は、ビット反転しても同じ値にならないデータである。このため、LSB firstとMSB firstの送信順序および受信順序の違いを区別できる。
 
 ## 実シミュレーション結果
-Vivado の実行ログより、上記の全ケースが期待どおりに確認できた。
 
-| ケースID | シミュレーション結果 | 判定 |
+Vivado Behavioral Simulationを実行した結果、全21判定が合格した。`TB_FAIL`は出力されず、最終結果は`TB_RESULT: PASS`であった。
+
+| ケース | 実測結果 | 判定 |
 | --- | --- | --- |
-| CASE1 | `rx_data=0x28`、`rx_done=1`、`parity_error=0`、`framing_error=0` を確認 | 合格 |
-| CASE1-READ | `data_valid` のクリアを確認 | 合格 |
-| CASE2 | `rx_data=0x55`、`parity_error=1`、`rx_done=0` を確認 | 合格 |
-| CASE3 | `framing_error=1`、`rx_done=0` を確認 | 合格 |
-| CASE4-1 | `rx_data=0xA5`、`rx_done=1`、`overrun_error=0` を確認 | 合格 |
-| CASE4-2 | `rx_data=0x3C`、`overrun_error=1` を確認 | 合格 |
-| CASE4-READ | `overrun_error=0` のクリアを確認 | 合格 |
+| RESET | `done=0`、`rdata=8'h00`、`sdout=z` | 合格 |
+| CASE1_LSB_BASIC | `sdout=0,1,1,0,1,0,0,1`、`rdata=8'h53`、`done=1` | 合格 |
+| CASE2_MSB_BASIC | `sdout=1,0,0,1,0,1,1,0`、`rdata=8'h53`、`done=1` | 合格 |
+| CASE3_TEN_DISABLED | `sdout=z`を維持、`rdata=8'h3A`、`done=1` | 合格 |
+| CASE4_SS_INACTIVE | `sdout=z`を維持、`rdata=8'h00`、`done=0`を維持 | 合格 |
 
-## フレーム単位の期待値
+## ビット単位の期待値
 
-### CASE1: データ `8'h28`
-- 2進数表現: `0010_1000`
-- LSB first の送信順: `0,0,0,1,0,1,0,0`
-- `1` の個数: `2`
-- 偶数パリティ bit: `0`
-- フレーム全体: `0(start), 0,0,0,1,0,1,0,0, 0(parity), 1(stop)`
+### CASE1_LSB_BASIC
 
-### CASE2: データ `8'h55`
-- 2進数表現: `0101_0101`
-- `1` の個数: `4`
-- 正しい偶数パリティ bit: `0`
-- テストベンチで注入するパリティ bit: `1`
-- 期待結果: `parity_error=1`
+- `tdata=8'h96`の`sdout`出力順序: `0,1,1,0,1,0,0,1`
+- `sdin`から入力する`8'h53`の順序: `1,1,0,0,1,0,1,0`
+- 1 bit受信後: `done=0`
+- 8回目の`sck`立上り後: `rdata=8'h53`、`done=1`
 
-### CASE3: データ `8'h33`
+### CASE2_MSB_BASIC
 
-- 2進数表現: `0011_0011`
-- `1` の個数: `4`
-- 正しい偶数パリティ bit: `0`
-- テストベンチで注入する stop bit: `0`
-- 期待結果: `framing_error=1`
+- `tdata=8'h96`の`sdout`出力順序: `1,0,0,1,0,1,1,0`
+- `sdin`から入力する`8'h53`の順序: `0,1,0,1,0,0,1,1`
+- 1 bit受信後: `done=0`
+- 8回目の`sck`立上り後: `rdata=8'h53`、`done=1`
+
+### CASE3_TEN_DISABLED
+
+- `tdata=8'h96`を設定しても、`ten=0`のため`sdout`は8 bitの全期間で`Z`
+- `sdin`から入力する`8'h3A`のLSB first順序: `0,1,0,1,1,1,0,0`
+- 1 bit受信後: `done=0`
+- 8回目の`sck`立上り後: `rdata=8'h3A`、`done=1`
+
+### CASE4_SS_INACTIVE
+
+- `ss=1`のため、8回の`sck`変化中も`sdout=Z`
+- `sdin`へ`8'h53`相当のビット列を与えても、`rdata=8'h00`および`done=0`を維持する
 
 ## 期待されるログ出力
-- 送信側 RTL:
-  - `uart_tx PATH: IDLE->START`
-  - `uart_tx PATH: DATA->PARITY`
-  - `uart_tx PATH: STOP->IDLE tx_complete`
-- 受信側 RTL:
-  - `uart_rx PATH: IDLE->START`
-  - `uart_rx PATH: START->DATA`
-  - `uart_rx PATH: PARITY->STOP`
-  - `uart_rx PATH: STOP->IDLE rx_done=1 ...`
-  - `uart_rx PATH: STOP->IDLE error framing=... parity=...`
-- テストベンチ:
-  - `TB_PATH: CASE1 ...`
-  - `TB_PATH: CASE2 ...`
-  - `TB_PATH: CASE3 ...`
-  - `TB_PATH: CASE4 ...`
-  - `TB_SUMMARY: pass=... fail=...`
+
+テストベンチは、次の種別のログを出力する。
+
+- `TB_PATH`: シミュレーション開始、リセット、各テストケースの実行経路
+- `TB_CASE`: テストケースの設定値
+- `TB_INFO`: 各ビットの`sdout`、`sdin`、内部カウンタ`nb`および送信ビット列
+- `TB_DUT_PATH`: リセット後および各転送後の`done`、`rdata`、`nb`
+- `TB_PASS`: 各チェックの合格結果
+- `TB_FAIL`: 各チェックの不合格結果
+
+今回の実行では、最終行に次の内容が出力された。
+
+```text
+TB_SUMMARY: pass=21 fail=0
+TB_RESULT: PASS
+```

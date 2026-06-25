@@ -1,181 +1,126 @@
-# RS-232回路およびテストベンチ説明書
+# SPI Slave回路およびテストベンチ説明書
 
 ## 対象ファイル
-- `uart_tx.v`: UART送信回路
-- `uart_rx.v`: UART受信回路
-- `tb_uart_loopback.v`: 検証用テストベンチ
+
+- `spi_slave.v`: SPI Slave回路
+- `tb_spi_slave.v`: 検証用テストベンチ
 
 ## 回路概要
 
+本回路は、OpenCoresのSPI Slave回路である。選択信号`ss`がLowの間、SPIクロック`sck`に同期して、マスタから`sdin`へ入力される8 bitデータを受信し、受信結果を`rdata`へ出力する。同時に、送信データ`tdata`を`sdout`から1 bitずつ出力する。
+
+`ss`はactive lowのスレーブ選択信号であり、`ss=1`のときスレーブは非選択状態となる。非選択状態では`sdout`はハイインピーダンス（`Z`）となり、`sck`が変化しても受信状態は更新されない。`ten`は送信出力イネーブルであり、`ss=0`かつ`ten=1`のときだけ`sdout`がデータを駆動する。`ten=0`では`sdout=Z`となるが、受信処理は継続する。
+
 ## 実装する通信仕様の概要
-本回路で扱う RS-232/UART 通信は、1本の信号線にビットを時間順に並べて送る非同期シリアル通信である。クロック信号そのものは送受信線には流さず、送信側と受信側が同じビット幅の時間間隔を前提として、start bit をきっかけに各ビットを順番に解釈する。
 
-今回のテストベンチでは、送信側、受信側、接続線の関係は以下のようになる。
-- データを送る側はテストベンチ `tb_uart_loopback.v` である。
-- テストベンチは、送信したい 8bit データを `tx_data` レジスタにセットする。
-- テストベンチは、`uart_tx` の `start` 入力を 1 クロックだけ `1` にして送信開始を指示する。
-- `uart_tx` は `start` を受けると、`tx_data` の値を内部に取り込み、`tx` 出力へ1ビットずつシリアルデータとして流す。
-- 通常のループバック試験では、`uart_tx` の `tx` 出力はテストベンチ内で `uart_rx` の `rx` 入力へ直結される。
-- `uart_rx` は `rx` 入力に流れてきたフレームを RS-232/UART の形式に従って受信し、取り出した 8bit のデータ部分を `data_out` に書き込む。
+本回路はSPI mode 3で動作する。アイドル時の`sck`はHighであり、送信データは`sck`の立下りで更新され、受信データは`sck`の立上りで取り込まれる。
 
-送信される1フレームの形式は以下のとおりである。
+| 一般的なSPI信号 | 本回路での信号名 | 方向・役割 |
+| --- | --- | --- |
+| SCK | `sck` | マスタから入力されるSPIクロック |
+| MOSI | `sdin` | マスタからスレーブへ入力されるシリアルデータ |
+| MISO | `sdout` | スレーブからマスタへ出力されるシリアルデータ |
+| SS / CS | `ss` | active lowのスレーブ選択信号 |
 
-```text
-1 start bit + 8 data bits + 1 even parity bit + 1 stop bit
-```
+`mlb`によってビット転送順を選択する。
 
-各ビットの役割は以下のとおりである。
-- `start bit`: フレームの開始を示すビットで、受信側が「ここからデータが来る」と判断するために使う。
-- `8 data bits`: 実際に送りたいデータ本体である。今回でいえば、テストベンチが `tx_data` にセットした値がこの部分に入る。
-- `even parity bit`: データビット内の `1` の個数が偶数になるように付ける誤り検出用ビットである。受信側はこのビットを確認し、値が合わなければ `parity_error` を立てる。
-- `stop bit`: フレームの終了を示すビットである。受信側はこのビットが正しい値でなければ `framing_error` を立てる。
+| `mlb` | ビット転送順 |
+| --- | --- |
+| `0` | LSB first |
+| `1` | MSB first |
 
-つまり、`tx_data` に入っている値そのものがそのまま1本の線に出るのではなく、start bit、parity bit、stop bit を付けたフレームに変換されて送信される。`uart_rx` はそのフレームから 8 data bits の部分だけをペイロードとして取り出し、正常に受信できた場合に `data_out`、`done`、`data_valid` を更新する。
+送受信するデータ幅は8 bitである。8回目の`sck`立上りで受信データを`rdata`へ確定し、`done`を`1`にする。
 
 ## 構成図（ブロック図）
-![RS-232 UART ループバック回路図](./rs232.png)
 
-## `uart_tx.v`
+![SPI Slaveテストベンチ構成図](./images/spi_slave.png)
+
+PowerPoint編集用ファイル: [spi_slave.pptx](./images/spi_slave.pptx)
+
+## 回路図
+
+![SPI Slave回路図](./images/spi_slave_module.png)
+
+## `spi_slave.v`
+
 ### 入力信号
-- `clk`: システムクロック
-- `rst`: 非同期リセット
-- `start`: 送信開始要求パルス
-- `data[7:0]`: 送信データ
+
+- `rstb`: active lowの非同期リセット信号
+- `ten`: `sdout`の出力イネーブル信号
+- `tdata[7:0]`: スレーブから送信する8 bitデータ
+- `mlb`: ビット転送順を選択する信号
+- `ss`: active lowのスレーブ選択信号
+- `sck`: SPIクロック
+- `sdin`: マスタから入力されるシリアルデータ
 
 ### 出力信号
-- `tx`: シリアル送信線
-- `busy`: 送信中フラグ
+
+- `sdout`: マスタへ出力するシリアルデータ。`ss=0`かつ`ten=1`のときだけ有効となる
+- `done`: 8 bit受信の完了を示す信号
+- `rdata[7:0]`: 受信した8 bitデータ
 
 ### 内部レジスタ
-- `state`: 送信状態を管理するステートマシン
-- `clk_count`: UART 1bit 期間内のクロック数を数えるカウンタ
-- `bit_index`: 現在送信中のデータビット位置
-- `data_reg`: 送信データを保持するレジスタ
-- `parity_bit`: 送信用に計算したパリティビット
+
+- `treg[7:0]`: `tdata`を保持し、`sdout`へ1 bitずつ出力する送信レジスタ
+- `rreg[7:0]`: `sdin`から取り込んだデータを一時保持する受信レジスタ
+- `nb[3:0]`: 受信済みビット数を数えるビットカウンタ
+- `sout`: `mlb`に応じて`treg[0]`または`treg[7]`を選択する内部信号
 
 ### 機能
-- `STATE_IDLE` で待機する
-- `start` 入力時に `data` をラッチし、パリティを計算する
-- start bit を送信する
-- データ 8bit を LSB first で送信する
-- パリティ有効時は parity bit を送信する
-- stop bit を送信して待機状態へ戻る
 
-### シミュレーションログ出力
-- リセットから待機状態への遷移
-- 送信開始受付
-- 各データ bit の送信
-- パリティ bit の送信
-- フレーム送信完了
-
-## `uart_rx.v`
-### 入力信号
-- `clk`: システムクロック
-- `rst`: 非同期リセット
-- `rx`: シリアル受信線
-- `data_read`: 受信済みデータの読出し完了通知
-
-### 出力信号
-- `data_out[7:0]`: 受信データ
-- `done`: 正常受信完了時に 1 クロックだけ立つ信号
-- `busy`: 受信中フラグ
-- `framing_error`: stop bit が不正な場合に立つ信号
-- `parity_error`: parity bit が不正な場合に立つ信号
-- `overrun_error`: 未読データが残ったまま次の正常フレームを受信した場合に立つ信号
-- `data_valid`: `data_out` に未読の有効データが格納されていることを示す信号
-
-### 内部レジスタ
-- `state`: 受信状態を管理するステートマシン
-- `clk_count`: UART 1bit 期間内のクロック数を数えるカウンタ
-- `bit_index`: 現在受信中のデータビット位置
-- `parity_calc`: 受信データから計算したパリティ値
-
-### 機能
-- start bit の Low を検出する
-- start bit 中央で再確認し、誤検出を防ぐ
-- データ 8bit を LSB first で受信する
-- parity bit を検査する
-- stop bit を検査する
-- 正常フレームなら `done` を立てる
-- 未読データがある状態で次の正常フレームを受信した場合、`overrun_error` を立てる
-
-### エラー動作
-- `parity_error=1`: parity bit が期待値と一致しない
-- `framing_error=1`: stop bit が `1` ではない
-- `overrun_error=1`: `data_valid=1` のまま次の正常フレームを受信した
+- `rstb=0`では、`rreg`、`rdata`、`done`および`nb`を初期化する。`treg`は`8'hFF`に初期化する
+- `ss=0`の間、`sck`の立上りごとに`sdin`を受信レジスタへ取り込む
+- `mlb=0`ではLSB firstとして右シフト方向で受信し、`mlb=1`ではMSB firstとして左シフト方向で受信する
+- 8 bitの受信完了時に`rdata`へ`rreg`を転送し、`done=1`とする
+- `sck`の立下りで、最初のビットでは`tdata`を`treg`へロードし、それ以降は`mlb`に応じた方向へ`treg`をシフトする
+- `ss=0`かつ`ten=1`のとき、`sdout`は`treg`の送信対象ビットを出力する
+- `ss=1`または`ten=0`のとき、`sdout`は`Z`となる
 
 ### 主要ステータス信号とテスト内容
-#### `data_valid` のセットおよびクリア
-意味:
-- `uart_rx` が正常に 1 フレーム受信し、`data_out` に有効なデータが入っていることを示す。
-- `data_valid=1` は、まだ読み出されていない受信データが存在することを意味する。
-- `data_read` を入力すると `data_valid=0` にクリアされる。
 
-テスト内容:
-- `CASE1`
-  - 正常受信後に `data_valid=1` になることを確認する。
-  - `pulse_data_read()` 後に `data_valid=0` になることを確認する。
-- `CASE4`
-  - 1 回目受信後に `data_valid=1` となることを確認する。
-  - 2 回目受信後も未読のため `data_valid=1` のままであることを確認する。
-  - `pulse_data_read()` 後にクリアされることを確認する。
+#### `sdout`の状態遷移と確認方針
 
-#### `parity_error` の検出
-意味:
-- parity bit が、受信したデータから計算した期待値と一致しないときに立つエラー信号である。
-- 今回は even parity を採用しているため、データ中の `1` の個数が偶数になることを前提に検査する。
-- 通信中のビット化けを簡易的に検出する目的で使用する。
+- `sdout`は`ss=0`かつ`ten=1`のときだけ有効である
+- `CASE1_LSB_BASIC`では、`tdata=8'h96`をLSB firstで出力する順序を確認する
+- `CASE2_MSB_BASIC`では、`tdata=8'h96`をMSB firstで出力する順序を確認する
+- `CASE3_TEN_DISABLED`では、`ten=0`により転送中も`sdout=Z`となることを確認する
+- `CASE4_SS_INACTIVE`では、`ss=1`により`sck`が変化しても`sdout=Z`となることを確認する
 
-テスト内容:
-- `CASE2`
-  - `inject_frame(8'h55, 1'b1, 1'b1)` により、意図的に誤った parity bit を注入する。
-  - その結果 `parity_error=1` となることを確認する。
-  - あわせて `rx_done=0`、`data_valid=0` であり、正常受信扱いしないことを確認する。
+#### `done`と`rdata`の状態遷移と確認方針
 
-#### `framing_error` の検出
-意味:
-- stop bit が本来 `1` で終わるべきところ、そうなっていない場合に立つエラー信号である。
-- フレーム終端が正しく形成されていないことを示す。
-- 通信区切りの異常や波形異常を検出する目的で使用する。
+- リセット直後は`done=0`、`rdata=8'h00`であることを確認する
+- `CASE1_LSB_BASIC`および`CASE2_MSB_BASIC`では、`sdin`から入力した`8'h53`が`rdata`へ格納され、8 bit受信後に`done=1`となることを確認する
+- `CASE3_TEN_DISABLED`では、送信出力を無効にしても`sdin`から入力した`8'h3A`を受信でき、`done=1`となることを確認する
+- `CASE4_SS_INACTIVE`では、`ss=1`の間は`rdata=8'h00`および`done=0`を維持することを確認する
 
-テスト内容:
-- `CASE3`
-  - `inject_frame(8'h33, 1'b0, 1'b0)` により、stop bit を意図的に `0` にする。
-  - その結果 `framing_error=1` となることを確認する。
-  - あわせて `rx_done=0`、`data_valid=0` であり、正常受信扱いしないことを確認する。
+## `tb_spi_slave.v`
 
-#### `overrun_error` の検出
-意味:
-- 前に受信したデータをまだ読み出していない状態で、新しい正常フレームを受信した場合に立つエラー信号である。
-- 受信自体は成立しているが、前のデータを取りこぼした可能性があることを示す。
-
-テスト内容:
-- `CASE4`
-  - まず `8'hA5` を正常受信し、`data_valid=1` とする。
-  - `data_read` を行わないまま、続けて `8'h3C` を受信させる。
-  - このとき `overrun_error=1` になることを確認する。
-  - 最後に `pulse_data_read()` を入力し、`overrun_error=0` に戻ることを確認する。
-
-## `tb_uart_loopback.v`
 ### 目的
-- 案件で要求される主要機能を一通り検証する
-- 実行パスをシミュレーションログに残す
-- 回路の入出力値をシミュレーションログに残す
+
+- `spi_slave.v`のリセット動作、送信順序、受信動作、および出力のトライステート制御を検証する
+- LSB firstとMSB firstの両方で、送信ビット列と受信データが正しいことを確認する
+- `ten=0`および`ss=1`のときに、`sdout`が他の回路を駆動しないことを確認する
+- テストベンチのログにテスト経路、各ケース、内部状態、判定結果を出力する
 
 ### テストケース
-- `CASE1`: 正常な loopback 送受信
-- `CASE2`: パリティエラーの強制注入
-- `CASE3`: フレーミングエラーの強制注入
-- `CASE4`: 未読データを残したまま2フレーム受信し、オーバーランを確認
+
+- `RESET`: リセット後の`done`、`rdata`、`sdout`を確認する
+- `CASE1_LSB_BASIC`: `mlb=0`、`ten=1`で、LSB firstの送受信を確認する
+- `CASE2_MSB_BASIC`: `mlb=1`、`ten=1`で、MSB firstの送受信を確認する
+- `CASE3_TEN_DISABLED`: `mlb=0`、`ten=0`で、`sdout=Z`を維持しながら受信することを確認する
+- `CASE4_SS_INACTIVE`: `ss=1`のまま8回の`sck`を与え、出力および受信状態が変化しないことを確認する
 
 ### Vivado Wave で観測すべき主な信号
-- `tx_line`
-- `rx_line`
-- `tx_busy`
-- `rx_busy`
-- `rx_data`
-- `rx_done`
-- `rx_data_valid`
-- `rx_parity_error`
-- `rx_framing_error`
-- `rx_overrun_error`
+
+- `tb_rstb`
+- `tb_ten`
+- `tb_tdata[7:0]`
+- `tb_mlb`
+- `tb_ss`
+- `tb_sck`
+- `tb_sdin`
+- `tb_sdout`
+- `tb_done`
+- `tb_rdata[7:0]`
+- `pass_count[31:0]`
+- `fail_count[31:0]`
