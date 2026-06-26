@@ -3,7 +3,7 @@
 ## テスト条件
 
 - 基準クロック周期：10 ns
-- SPIモード：mode 3（待機時`sck=1`、立下りで送信、立上りで受信）
+- SPIモード：mode 3
 - 送受信データ幅：8 bit
 - 送信データ：`8'h96`（2進数：`1001_0110`）
 - 受信データ：`8'h3C`（2進数：`0011_1100`）
@@ -50,10 +50,10 @@
 
 - `TB_PATH: simulation start`
 - `TB_PATH: reset sequence start`
-- `TB_PATH: CASE1_LSB_BASIC start`
-- `TB_PATH: CASE2_MSB_BASIC start`
-- `TB_PATH: CASE3_CDIV_01 start`
-- `TB_PATH: CASE4_MID_START start`
-- `TB_INFO: CASE4_MID_START post_mid_start_second_transfer=0`
+- `TB_PATH: CASE1 start`
+- `TB_PATH: CASE2 start`
+- `TB_PATH: CASE3 start`
+- `TB_PATH: CASE4 start`
+- `TB_INFO: CASE4 post_mid_start_second_transfer=0`
 - `TB_SUMMARY: pass=35 fail=0`
 - `TB_RESULT: PASS`

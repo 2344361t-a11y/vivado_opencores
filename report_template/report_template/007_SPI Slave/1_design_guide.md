@@ -81,17 +81,17 @@ PowerPoint編集用ファイル: [spi_slave.pptx](./images/spi_slave.pptx)
 #### `sdout`の状態遷移と確認方針
 
 - `sdout`は`ss=0`かつ`ten=1`のときだけ有効である
-- `CASE1_LSB_BASIC`では、`tdata=8'h96`をLSB firstで出力する順序を確認する
-- `CASE2_MSB_BASIC`では、`tdata=8'h96`をMSB firstで出力する順序を確認する
-- `CASE3_TEN_DISABLED`では、`ten=0`により転送中も`sdout=Z`となることを確認する
-- `CASE4_SS_INACTIVE`では、`ss=1`により`sck`が変化しても`sdout=Z`となることを確認する
+- `CASE1`では、`tdata=8'h96`をLSB firstで出力する順序を確認する
+- `CASE2`では、`tdata=8'h96`をMSB firstで出力する順序を確認する
+- `CASE3`では、`ten=0`により転送中も`sdout=Z`となることを確認する
+- `CASE4`では、`ss=1`により`sck`が変化しても`sdout=Z`となることを確認する
 
 #### `done`と`rdata`の状態遷移と確認方針
 
 - リセット直後は`done=0`、`rdata=8'h00`であることを確認する
-- `CASE1_LSB_BASIC`および`CASE2_MSB_BASIC`では、`sdin`から入力した`8'h53`が`rdata`へ格納され、8 bit受信後に`done=1`となることを確認する
-- `CASE3_TEN_DISABLED`では、送信出力を無効にしても`sdin`から入力した`8'h3A`を受信でき、`done=1`となることを確認する
-- `CASE4_SS_INACTIVE`では、`ss=1`の間は`rdata=8'h00`および`done=0`を維持することを確認する
+- `CASE1`および`CASE2`では、`sdin`から入力した`8'h53`が`rdata`へ格納され、8 bit受信後に`done=1`となることを確認する
+- `CASE3`では、送信出力を無効にしても`sdin`から入力した`8'h3A`を受信でき、`done=1`となることを確認する
+- `CASE4`では、`ss=1`の間は`rdata=8'h00`および`done=0`を維持することを確認する
 
 ## `tb_spi_slave.v`
 
@@ -105,10 +105,10 @@ PowerPoint編集用ファイル: [spi_slave.pptx](./images/spi_slave.pptx)
 ### テストケース
 
 - `RESET`: リセット後の`done`、`rdata`、`sdout`を確認する
-- `CASE1_LSB_BASIC`: `mlb=0`、`ten=1`で、LSB firstの送受信を確認する
-- `CASE2_MSB_BASIC`: `mlb=1`、`ten=1`で、MSB firstの送受信を確認する
-- `CASE3_TEN_DISABLED`: `mlb=0`、`ten=0`で、`sdout=Z`を維持しながら受信することを確認する
-- `CASE4_SS_INACTIVE`: `ss=1`のまま8回の`sck`を与え、出力および受信状態が変化しないことを確認する
+- `CASE1`: `mlb=0`、`ten=1`で、LSB firstの送受信を確認する
+- `CASE2`: `mlb=1`、`ten=1`で、MSB firstの送受信を確認する
+- `CASE3`: `mlb=0`、`ten=0`で、`sdout=Z`を維持しながら受信することを確認する
+- `CASE4`: `ss=1`のまま8回の`sck`を与え、出力および受信状態が変化しないことを確認する
 
 ### Vivado Wave で観測すべき主な信号
 

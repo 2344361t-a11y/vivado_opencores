@@ -223,7 +223,7 @@ module tb_spi_slave;
         reg tristate_ok;
         integer i;
         begin
-            $display("[%0t] TB_PATH: CASE4_SS_INACTIVE start", $time);
+            $display("[%0t] TB_PATH: CASE4 start", $time);
 
             // Reset establishes the state that must remain unchanged while ss=1.
             tb_ss    = 1'b1;
@@ -239,7 +239,7 @@ module tb_spi_slave;
             rdata_before = tb_rdata;
             done_before = tb_done;
             tristate_ok = 1'b1;
-            $display("[%0t] TB_CASE: CASE4_SS_INACTIVE apply 8 sck cycles with ss=1", $time);
+            $display("[%0t] TB_CASE: CASE4 apply 8 sck cycles with ss=1", $time);
 
             for (i = 0; i < 8; i = i + 1) begin
                 #10 tb_sck = 1'b0;
@@ -247,7 +247,7 @@ module tb_spi_slave;
                 tb_sdin = ordered_bit(8'h53, 1'b0, i);
                 if (tb_sdout !== 1'bz)
                     tristate_ok = 1'b0;
-                $display("[%0t] TB_INFO: CASE4_SS_INACTIVE bit%0d sdout=%b sdin_set=%b nb=%0d",
+                $display("[%0t] TB_INFO: CASE4 bit%0d sdout=%b sdin_set=%b nb=%0d",
                          $time, i, tb_sdout, tb_sdin, dut.nb);
                 #9 tb_sck = 1'b1;
                 #1;
@@ -259,7 +259,7 @@ module tb_spi_slave;
                 tb_fail("CASE4 sdout must remain Z while ss is 1");
             check_data(tb_rdata, rdata_before, "CASE4 rdata must not change while ss is 1");
             check_bit(tb_done, done_before, "CASE4 done must not change while ss is 1");
-            $display("[%0t] TB_DUT_PATH: CASE4_SS_INACTIVE complete nb=%0d done=%0b rdata=0x%02h",
+            $display("[%0t] TB_DUT_PATH: CASE4 complete nb=%0d done=%0b rdata=0x%02h",
                      $time, dut.nb, tb_done, tb_rdata);
             #20;
         end
@@ -283,13 +283,13 @@ module tb_spi_slave;
         reset_dut();
 
         // CASE1: LSB first. 0x96 and 0x53 are not bit-order symmetric.
-        run_active_transfer("CASE1_LSB_BASIC", 1'b0, 1'b1, 8'h96, 8'h53);
+        run_active_transfer("CASE1", 1'b0, 1'b1, 8'h96, 8'h53);
 
         // CASE2: MSB first with the same byte values for direct comparison.
-        run_active_transfer("CASE2_MSB_BASIC", 1'b1, 1'b1, 8'h96, 8'h53);
+        run_active_transfer("CASE2", 1'b1, 1'b1, 8'h96, 8'h53);
 
         // CASE3: ten only controls sdout; reception must still work.
-        run_active_transfer("CASE3_TEN_DISABLED", 1'b0, 1'b0, 8'h96, 8'h3A);
+        run_active_transfer("CASE3", 1'b0, 1'b0, 8'h96, 8'h3A);
 
         // CASE4: an unselected slave must not drive or update state.
         run_ss_inactive_case();

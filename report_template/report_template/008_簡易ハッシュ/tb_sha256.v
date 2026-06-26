@@ -320,11 +320,11 @@ module tb_sha256;
 
     task run_multi_block_case;
         begin
-            $display("[%0t] TB_PATH: CASE3_SHA256_MULTI_BLOCK start", $time);
+            $display("[%0t] TB_PATH: CASE3 start", $time);
 
-            write_block("CASE3_SHA256_MULTI_BLOCK_BLOCK0", 1'b0, BLOCK_LONG_0);
-            write_block("CASE3_SHA256_MULTI_BLOCK_BLOCK1", 1'b1, BLOCK_LONG_1);
-            read_digest("CASE3_SHA256_MULTI_BLOCK", DIGEST_LONG);
+            write_block("CASE3 block0", 1'b0, BLOCK_LONG_0);
+            write_block("CASE3 block1", 1'b1, BLOCK_LONG_1);
+            read_digest("CASE3", DIGEST_LONG);
         end
     endtask
 
@@ -343,8 +343,8 @@ module tb_sha256;
 
         reset_dut();
 
-        run_single_block_case("CASE1_SHA256_ABC_SINGLE_BLOCK", BLOCK_ABC, DIGEST_ABC);
-        run_single_block_case("CASE2_SHA256_EMPTY_SINGLE_BLOCK", BLOCK_EMPTY, DIGEST_EMPTY);
+        run_single_block_case("CASE1", BLOCK_ABC, DIGEST_ABC);
+        run_single_block_case("CASE2", BLOCK_EMPTY, DIGEST_EMPTY);
         run_multi_block_case();
 
         $display("[%0t] TB_SUMMARY: pass=%0d fail=%0d", $time, pass_count, fail_count);

@@ -2,9 +2,8 @@
 
 ## テスト条件
 - クロック周期: `10 ns`
-- GPIO幅: `8 bit`
-- 対象GPIO: `gpio[7:0]`
-- バス形式: WISHBONE-style bus
+- 検証対象GPIO: `gpio[7:0]`
+- 有効アクセス条件: `wb_cyc=1`かつ`wb_stb=1`
 
 ## 期待値表
 

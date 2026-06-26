@@ -337,16 +337,16 @@ module tb_spi_master;
         reset_dut();
 
         // CASE1: LSB first basic transfer, cdiv=00 -> sck period = 40 ns when clk period is 10 ns
-        run_spi_case("CASE1_LSB_BASIC", 1'b0, 2'b00, 8'h96, 8'h3C, 1'b0, 1'b1, 40);
+        run_spi_case("CASE1", 1'b0, 2'b00, 8'h96, 8'h3C, 1'b0, 1'b1, 40);
 
         // CASE2: MSB first basic transfer
-        run_spi_case("CASE2_MSB_BASIC", 1'b1, 2'b00, 8'h96, 8'h3C, 1'b0, 1'b0, 0);
+        run_spi_case("CASE2", 1'b1, 2'b00, 8'h96, 8'h3C, 1'b0, 1'b0, 0);
 
         // CASE3: clock divider check, cdiv=01 -> sck period = 80 ns when clk period is 10 ns
-        run_spi_case("CASE3_CDIV_01", 1'b0, 2'b01, 8'h96, 8'h3C, 1'b0, 1'b1, 80);
+        run_spi_case("CASE3", 1'b0, 2'b01, 8'h96, 8'h3C, 1'b0, 1'b1, 80);
 
         // CASE4: start pulse during active transfer must not break the current transfer
-        run_spi_case("CASE4_MID_START", 1'b0, 2'b00, 8'h96, 8'h3C, 1'b1, 1'b0, 0);
+        run_spi_case("CASE4", 1'b0, 2'b00, 8'h96, 8'h3C, 1'b1, 1'b0, 0);
 
         $display("[%0t] TB_SUMMARY: pass=%0d fail=%0d", $time, pass_count, fail_count);
 
